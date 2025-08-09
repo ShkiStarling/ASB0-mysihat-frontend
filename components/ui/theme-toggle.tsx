@@ -49,7 +49,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
       <Moon
         className={cn(
           "absolute inset-0 m-auto size-5",
-          "text-violet-400",
+          "text-blue-800",
           "transition-all duration-300",
           mounted
             ? isDark

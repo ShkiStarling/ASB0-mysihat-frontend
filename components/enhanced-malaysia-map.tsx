@@ -39,43 +39,81 @@ function EnhancedMalaysiaMap({
       mapInstanceRef.current = null;
     }
 
-    import("leaflet").then((L) => {
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-        iconUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-        shadowUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-      });
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      import("leaflet").then((L) => {
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+          iconUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+        });
 
-      // Ensure the container is empty before initializing
-      if (mapRef.current) {
-        mapRef.current.innerHTML = '';
-        (mapRef.current as any)._leaflet_id = null;
-      }
+        // Ensure the container is empty and properly reset
+        if (mapRef.current) {
+          mapRef.current.innerHTML = "";
+          delete (mapRef.current as any)._leaflet_id;
+          // Force a reflow
+          mapRef.current.offsetHeight;
+        }
 
-      const map = L.map(mapRef.current!, {
-        zoomControl: false,
-        attributionControl: true,
-      }).setView([4.2105, 101.9758], 6);
+        const map = L.map(mapRef.current!, {
+          zoomControl: false,
+          attributionControl: true,
+          dragging: true,
+          touchZoom: true,
+          doubleClickZoom: true,
+          scrollWheelZoom: true,
+          boxZoom: true,
+          keyboard: true,
+          zoomAnimation: true,
+          fadeAnimation: true,
+          markerZoomAnimation: true,
+        }).setView([4.2105, 101.9758], 6);
 
-      mapInstanceRef.current = map;
+        mapInstanceRef.current = map;
 
-      // Add custom zoom control with styling to match the image
-      const zoomControl = L.control
-        .zoom({
-          position: "topleft",
-        })
-        .addTo(map);
+        // Force invalidate size after a short delay
+        setTimeout(() => {
+          if (map && mapRef.current) {
+            map.invalidateSize();
+          }
+        }, 100);
 
-      // Style the zoom control to match the image
-      const style = document.createElement("style");
-      style.textContent = `
+        // Add custom zoom control with styling to match the image
+        const zoomControl = L.control
+          .zoom({
+            position: "topleft",
+          })
+          .addTo(map);
+
+        // Style the zoom control and fix z-index issues
+        const style = document.createElement("style");
+        style.textContent = `
+        /* Fix z-index for all Leaflet elements */
+        .leaflet-container {
+          z-index: 1 !important;
+        }
+        
+        .leaflet-control-container {
+          z-index: 10 !important;
+        }
+        
+        .leaflet-popup {
+          z-index: 20 !important;
+        }
+        
+        .leaflet-tooltip {
+          z-index: 15 !important;
+        }
+        
         .leaflet-control-zoom {
           border: none !important;
           box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+          z-index: 10 !important;
         }
         .leaflet-control-zoom a {
           background: white !important;
@@ -98,45 +136,45 @@ function EnhancedMalaysiaMap({
           border-top: none !important;
         }
       `;
-      document.head.appendChild(style);
+        document.head.appendChild(style);
 
-      // Use OpenStreetMap tiles to match the image style
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-      }).addTo(map);
-
-      // Clear existing markers
-      map.eachLayer((layer) => {
-        if (layer instanceof L.CircleMarker) {
-          map.removeLayer(layer);
-        }
-      });
-
-      filteredDistricts.forEach((district) => {
-        const alertColor =
-          district.alertLevel === "high"
-            ? "#dc2626"
-            : district.alertLevel === "medium"
-            ? "#ea580c"
-            : "#16a34a";
-
-        const size = Math.max(12, Math.min(24, district.keywordCount / 8));
-
-        // Create circle markers similar to the image
-        const marker = L.circleMarker(district.coordinates, {
-          radius: size,
-          fillColor: alertColor,
-          color: "white",
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.8,
+        // Use OpenStreetMap tiles to match the image style
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution:
+            '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
         }).addTo(map);
 
-        // Add hover tooltip
-        marker.bindTooltip(
-          `
+        // Clear existing markers
+        map.eachLayer((layer) => {
+          if (layer instanceof L.CircleMarker) {
+            map.removeLayer(layer);
+          }
+        });
+
+        filteredDistricts.forEach((district) => {
+          const alertColor =
+            district.alertLevel === "high"
+              ? "#dc2626"
+              : district.alertLevel === "medium"
+              ? "#ea580c"
+              : "#16a34a";
+
+          const size = Math.max(12, Math.min(24, district.keywordCount / 8));
+
+          // Create circle markers similar to the image
+          const marker = L.circleMarker(district.coordinates, {
+            radius: size,
+            fillColor: alertColor,
+            color: "white",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8,
+          }).addTo(map);
+
+          // Add hover tooltip
+          marker.bindTooltip(
+            `
           <div style="
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 12px;
@@ -149,18 +187,18 @@ function EnhancedMalaysiaMap({
             </div>
           </div>
           `,
-          {
-            permanent: false,
-            sticky: true,
-            direction: "top",
-            offset: [0, -10],
-            className: "custom-tooltip",
-          }
-        );
+            {
+              permanent: false,
+              sticky: true,
+              direction: "top",
+              offset: [0, -10],
+              className: "custom-tooltip",
+            }
+          );
 
-        // Enhanced popup with clean styling
-        marker.bindPopup(
-          `
+          // Enhanced popup with clean styling
+          marker.bindPopup(
+            `
           <div style="
             padding: 12px; 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
@@ -249,32 +287,32 @@ function EnhancedMalaysiaMap({
             </div>
           </div>
         `,
-          {
-            maxWidth: 250,
-            className: "custom-popup-clean",
-          }
-        );
+            {
+              maxWidth: 250,
+              className: "custom-popup-clean",
+            }
+          );
 
-        marker.on("click", () => {
-          if (onThreatClick) {
-            (window as any).handleThreatClick = (districtName: string) => {
-              onThreatClick(districtName);
-            };
+          marker.on("click", () => {
+            if (onThreatClick) {
+              (window as any).handleThreatClick = (districtName: string) => {
+                onThreatClick(districtName);
+              };
+            }
+          });
+
+          // Highlight selected district
+          if (selectedDistrict === district.name) {
+            marker.setStyle({
+              weight: 4,
+              color: "#1f2937",
+            });
           }
         });
 
-        // Highlight selected district
-        if (selectedDistrict === district.name) {
-          marker.setStyle({
-            weight: 4,
-            color: "#1f2937",
-          });
-        }
-      });
-
-      // Add custom CSS for clean popup and tooltip styling
-      const popupStyle = document.createElement("style");
-      popupStyle.textContent = `
+        // Add custom CSS for clean popup and tooltip styling with proper z-index
+        const popupStyle = document.createElement("style");
+        popupStyle.textContent = `
         .custom-popup-clean .leaflet-popup-content-wrapper {
           background: white;
           border-radius: 8px;
@@ -312,6 +350,7 @@ function EnhancedMalaysiaMap({
           font-size: 12px !important;
           padding: 6px 8px !important;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+          z-index: 15 !important;
         }
 
         .custom-tooltip:before {
@@ -321,19 +360,49 @@ function EnhancedMalaysiaMap({
         .leaflet-tooltip-top:before {
           border-top-color: rgba(0, 0, 0, 0.8) !important;
         }
+        
+        /* Ensure all leaflet elements stay within proper z-index bounds */
+        .leaflet-pane {
+          z-index: auto !important;
+        }
+        
+        .leaflet-map-pane {
+          z-index: auto !important;
+        }
+        
+        .leaflet-control-attribution {
+          z-index: 5 !important;
+        }
+        
+        /* Ensure map interactions work properly */
+        .leaflet-container {
+          cursor: grab;
+        }
+        
+        .leaflet-container:active {
+          cursor: grabbing;
+        }
+        
+        .leaflet-dragging .leaflet-container {
+          cursor: grabbing;
+        }
       `;
-      document.head.appendChild(popupStyle);
+        document.head.appendChild(popupStyle);
+      });
     });
 
     return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
       // Also clean up the DOM element
       if (mapRef.current) {
-        mapRef.current.innerHTML = '';
-        (mapRef.current as any)._leaflet_id = null;
+        mapRef.current.innerHTML = "";
+        delete (mapRef.current as any)._leaflet_id;
       }
     };
   }, [filteredDistricts, selectedDistrict, onThreatClick]);
@@ -349,34 +418,14 @@ function EnhancedMalaysiaMap({
       <div className="relative">
         <div
           ref={mapRef}
-          className="w-full h-full rounded-lg border border-gray-200 shadow-sm overflow-hidden bg-blue-50"
-          style={{ minHeight: "400px" }}
+          className="w-full h-full rounded-lg border border-gray-200 shadow-sm bg-blue-50"
+          style={{
+            minHeight: "400px",
+            position: "relative",
+            zIndex: 1,
+            cursor: "grab",
+          }}
         />
-
-        {/* Legend - positioned like in the image */}
-        <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg border border-gray-200 px-4 py-2">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-600 rounded-full"></div>
-              <span className="text-gray-700">High Risk</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-orange-600 rounded-full"></div>
-              <span className="text-gray-700">Medium Risk</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-              <span className="text-gray-700">Low Risk</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Last updated - positioned like in the image */}
-        <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-1">
-          <span className="text-xs text-gray-600">
-            Last updated: 2 hours ago
-          </span>
-        </div>
       </div>
     </>
   );

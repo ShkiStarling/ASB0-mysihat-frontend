@@ -233,6 +233,18 @@
   color: var(--text-muted);
 }
 
+.rounded-lg {
+  border-radius: 12px;
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.rounded-md {
+  border-radius: 8px;
+}
+
 /* Badges */
 .nexus-badge-live {
   @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;

@@ -15,15 +15,18 @@ import {
   AlertTriangle,
   Bell,
   Brain,
+  CheckCircle,
   Edit,
+  Loader2,
   Plus,
   Target,
   Trash2,
+  XCircle,
 } from "lucide-react";
 import { useState } from "react";
 
-// Mock alert data
-const mockActiveAlerts = [
+// Initial alert data
+const initialAlerts = [
   {
     id: 1,
     keyword: "denggi + Klang Valley",
@@ -102,95 +105,133 @@ export default function KeywordManagerPage() {
   const [newThreshold, setNewThreshold] = useState("");
   const [newPriority, setNewPriority] = useState("medium");
   const [editingAlert, setEditingAlert] = useState<number | null>(null);
-  const [keywordData, setKeywordData] = useState(mockActiveAlerts);
+  const [editThreshold, setEditThreshold] = useState("");
+  const [editPriority, setEditPriority] = useState("");
+  const [alerts, setAlerts] = useState(initialAlerts);
+  const [isAdding, setIsAdding] = useState(false);
 
-  const currentTime = new Date();
-  const timeString = currentTime.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-
-  const handleAddAlert = () => {
+  const handleAddAlert = async () => {
     if (newKeyword && newThreshold) {
-      // Generate a unique ID by finding the max existing ID and adding 1
-      const maxId = mockActiveAlerts.length > 0 
-        ? Math.max(...mockActiveAlerts.map(alert => alert.id))
-        : 0;
-      
-      // Parse threshold and validate it's a positive number
+      setIsAdding(true);
+
+      // Simulate API call with 3-second delay
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      const maxId =
+        alerts.length > 0 ? Math.max(...alerts.map((alert) => alert.id)) : 0;
       const parsedThreshold = Number.parseInt(newThreshold);
+
       if (isNaN(parsedThreshold) || parsedThreshold <= 0) {
-        console.error("Invalid threshold value:", newThreshold);
+        setIsAdding(false);
         return;
       }
 
-      // Generate current timestamp
       const currentTimestamp = new Date().toLocaleString("en-US", {
         year: "numeric",
-        month: "2-digit", 
+        month: "2-digit",
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
-        hour12: false
+        hour12: false,
       });
 
-      // Determine status based on threshold (mock logic)
-      const mockCurrentMentions = Math.floor(Math.random() * (parsedThreshold * 1.5));
-      const status = mockCurrentMentions >= parsedThreshold 
-        ? "triggered" 
-        : mockCurrentMentions >= parsedThreshold * 0.8 
-        ? "monitoring" 
-        : "normal";
+      const mockCurrentMentions = Math.floor(
+        Math.random() * (parsedThreshold * 1.5)
+      );
+      const status =
+        mockCurrentMentions >= parsedThreshold
+          ? "triggered"
+          : mockCurrentMentions >= parsedThreshold * 0.8
+          ? "monitoring"
+          : "normal";
 
-      // Extract district from location or set default
-      const district = newLocation && newLocation !== "allMalaysia" 
-        ? newLocation 
-        : "All Malaysia";
+      const district =
+        newLocation && newLocation !== "allMalaysia"
+          ? newLocation
+          : "All Malaysia";
 
-      const newKeywordAdd = {
+      const newAlert = {
         id: maxId + 1,
-        keyword: newKeyword + (newLocation && newLocation !== "allMalaysia" ? ` + ${newLocation}` : ""),
+        keyword:
+          newKeyword +
+          (newLocation && newLocation !== "allMalaysia"
+            ? ` + ${newLocation}`
+            : ""),
         current: mockCurrentMentions,
         status: status,
         district: district,
         timestamp: currentTimestamp,
         priority: newPriority,
-        enabled: true, // Enable by default for new alerts
+        enabled: true,
         threshold: parsedThreshold,
       };
-      
-      // Add to mockActiveAlerts
-      mockActiveAlerts.push(newKeywordAdd);
-      
-      // Update state to trigger re-render
-      setKeywordData([...mockActiveAlerts]);
+
+      setAlerts((prev) => [...prev, newAlert]);
 
       // Clear form fields
       setNewKeyword("");
       setNewLocation("");
       setNewThreshold("");
       setNewPriority("medium");
+      setIsAdding(false);
     }
   };
 
   const handleDeleteAlert = (alertId: number) => {
-    console.log("Deleting alert:", alertId);
-
-    // Remove the alert from the mockActiveAlerts array
-    const updatedAlerts = mockActiveAlerts.filter(alert => alert.id !== alertId);
-    
-    // Update the mockActiveAlerts array
-    mockActiveAlerts.length = 0;
-    mockActiveAlerts.push(...updatedAlerts);
-    
-    // Force a re-render by updating the keywordData state
-    setKeywordData([...updatedAlerts]);
+    setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
   };
 
   const handleToggleAlert = (alertId: number) => {
-    console.log("Toggling alert:", alertId);
+    setAlerts((prev) =>
+      prev.map((alert) =>
+        alert.id === alertId ? { ...alert, enabled: !alert.enabled } : alert
+      )
+    );
+  };
+
+  const handleEditAlert = (alertId: number) => {
+    const alert = alerts.find((a) => a.id === alertId);
+    if (alert) {
+      setEditThreshold(alert.threshold.toString());
+      setEditPriority(alert.priority);
+      setEditingAlert(alertId);
+    }
+  };
+
+  const handleSaveAlert = (alertId: number) => {
+    const parsedThreshold = Number.parseInt(editThreshold);
+    if (isNaN(parsedThreshold) || parsedThreshold <= 0) {
+      return;
+    }
+
+    setAlerts((prev) =>
+      prev.map((alert) =>
+        alert.id === alertId
+          ? {
+              ...alert,
+              threshold: parsedThreshold,
+              priority: editPriority,
+              timestamp: new Date().toLocaleString("en-US", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              }),
+            }
+          : alert
+      )
+    );
+    setEditingAlert(null);
+    setEditThreshold("");
+    setEditPriority("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingAlert(null);
+    setEditThreshold("");
+    setEditPriority("");
   };
 
   const getStatusColor = (status: string) => {
@@ -241,7 +282,7 @@ export default function KeywordManagerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-nexus-text">
-              {mockActiveAlerts.length}
+              {alerts.length}
             </div>
             <p className="text-xs text-nexus-text-muted">Configured keywords</p>
           </CardContent>
@@ -256,7 +297,7 @@ export default function KeywordManagerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-nexus-text">
-              {mockActiveAlerts.filter((a) => a.status === "triggered").length}
+              {alerts.filter((a) => a.status === "triggered").length}
             </div>
             <p className="text-xs text-red-500">Requiring attention</p>
           </CardContent>
@@ -271,7 +312,7 @@ export default function KeywordManagerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-nexus-text">
-              {mockActiveAlerts.filter((a) => a.status === "monitoring").length}
+              {alerts.filter((a) => a.status === "monitoring").length}
             </div>
             <p className="text-xs text-orange-500">Below threshold</p>
           </CardContent>
@@ -280,13 +321,15 @@ export default function KeywordManagerPage() {
         <Card className="nexus-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-nexus-text-muted">
-              AI Processing
+              Disabled
             </CardTitle>
-            <Brain className="h-4 w-4 text-purple-500" />
+            <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-nexus-text">Active</div>
-            <p className="text-xs text-purple-500">Neural networks online</p>
+            <div className="text-2xl font-bold text-nexus-text">
+              {alerts.filter((a) => !a.enabled).length}
+            </div>
+            <p className="text-xs text-red-500">Disabled</p>
           </CardContent>
         </Card>
       </div>
@@ -298,7 +341,7 @@ export default function KeywordManagerPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-nexus-text">
                 <Plus className="w-5 h-5 text-nexus-cyan" />
-                Add New AI Keyword
+                Add New Keyword
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -312,6 +355,7 @@ export default function KeywordManagerPage() {
                     value={newKeyword}
                     onChange={(e) => setNewKeyword(e.target.value)}
                     className="nexus-input"
+                    disabled={isAdding}
                   />
                   <div className="mt-3">
                     <p className="text-xs text-nexus-text-muted mb-2 flex items-center gap-2">
@@ -323,7 +367,8 @@ export default function KeywordManagerPage() {
                         <button
                           key={suggestion}
                           onClick={() => setNewKeyword(suggestion)}
-                          className="text-xs bg-nexus-card hover:bg-nexus-hover px-2 py-1 rounded border border-nexus-border text-nexus-text transition-colors"
+                          disabled={isAdding}
+                          className="text-xs bg-nexus-card hover:bg-nexus-hover px-2 py-1 rounded border border-nexus-border text-nexus-text transition-colors disabled:opacity-50"
                         >
                           {suggestion}
                         </button>
@@ -336,14 +381,27 @@ export default function KeywordManagerPage() {
                   <label className="text-sm font-medium text-nexus-text mb-2 block">
                     Location (Optional)
                   </label>
-                  <Select value={newLocation} onValueChange={setNewLocation}>
+                  <Select
+                    value={newLocation}
+                    onValueChange={setNewLocation}
+                    disabled={isAdding}
+                  >
                     <SelectTrigger className="nexus-input">
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent className="bg-nexus-card border-nexus-border">
-                      <SelectItem value="allMalaysia">All Malaysia</SelectItem>
+                      <SelectItem
+                        className="text-black dark:text-white"
+                        value="allMalaysia"
+                      >
+                        All Malaysia
+                      </SelectItem>
                       {locationSuggestions.map((location) => (
-                        <SelectItem key={location} value={location}>
+                        <SelectItem
+                          className="text-black dark:text-white"
+                          key={location}
+                          value={location}
+                        >
                           {location}
                         </SelectItem>
                       ))}
@@ -361,6 +419,7 @@ export default function KeywordManagerPage() {
                     value={newThreshold}
                     onChange={(e) => setNewThreshold(e.target.value)}
                     className="nexus-input"
+                    disabled={isAdding}
                   />
                 </div>
 
@@ -368,11 +427,15 @@ export default function KeywordManagerPage() {
                   <label className="text-sm font-medium text-nexus-text mb-2 block">
                     Priority Level
                   </label>
-                  <Select value={newPriority} onValueChange={setNewPriority}>
+                  <Select
+                    value={newPriority}
+                    onValueChange={setNewPriority}
+                    disabled={isAdding}
+                  >
                     <SelectTrigger className="nexus-input">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-nexus-card border-nexus-border">
+                    <SelectContent className="bg-nexus-card border-nexus-border text-black dark:text-white">
                       <SelectItem value="high">High Priority</SelectItem>
                       <SelectItem value="medium">Medium Priority</SelectItem>
                       <SelectItem value="low">Low Priority</SelectItem>
@@ -382,10 +445,18 @@ export default function KeywordManagerPage() {
 
                 <Button
                   onClick={handleAddAlert}
-                  className="w-full nexus-action-btn bg-nexus-cyan text-nexus-dark hover:bg-nexus-cyan/80"
+                  className="w-full rounded-full shadow-md bg-blue-800 dark:bg-blue-900 hover:bg-blue-700 dark:hover:bg-blue-800 text-white"
+                  disabled={isAdding || !newKeyword || !newThreshold}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add AI Keyword
+                  {isAdding ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 text-white" />
+                    </>
+                  )}
                 </Button>
               </div>
 
@@ -420,143 +491,156 @@ export default function KeywordManagerPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockActiveAlerts.map((alert) => (
-                  <div key={alert.id} className="nexus-card p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Badge className={getPriorityColor(alert.priority)}>
-                          {alert.priority}
-                        </Badge>
-                        <Badge className={getStatusColor(alert.status)}>
-                          {alert.status}
-                        </Badge>
-                        {!alert.enabled && (
-                          <Badge className="bg-gray-100 text-gray-800">
-                            Disabled
+                {alerts
+                  .sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp))
+                  .map((alert) => (
+                    <div key={alert.id} className="nexus-card p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Badge className={getPriorityColor(alert.priority)}>
+                            {alert.priority}
                           </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          className="nexus-action-btn h-8 px-2"
-                          onClick={() =>
-                            setEditingAlert(
-                              editingAlert === alert.id ? null : alert.id
-                            )
-                          }
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          className={`nexus-action-btn h-8 px-2 ${
-                            alert.enabled
-                              ? "text-orange-600 hover:bg-orange-50"
-                              : "text-green-600 hover:bg-green-50"
-                          }`}
-                          onClick={() => handleToggleAlert(alert.id)}
-                        >
-                          {alert.enabled ? "Disable" : "Enable"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="nexus-action-btn h-8 px-2 text-red-600 hover:bg-red-50"
-                          onClick={() => handleDeleteAlert(alert.id)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <h3 className="font-semibold text-lg text-nexus-text">
-                        {alert.keyword}
-                      </h3>
-                      <p className="text-sm text-nexus-text-muted">
-                        {alert.district} • Threshold: {alert.threshold} mentions
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="text-nexus-text-muted">
-                          Current:{" "}
-                          <span className="font-medium text-red-500">
-                            {alert.current}
-                          </span>
-                        </span>
-                        <span className="text-nexus-text-muted">
-                          Threshold:{" "}
-                          <span className="font-medium text-nexus-text">
-                            {alert.threshold}
-                          </span>
-                        </span>
-                        <span className="text-nexus-text-muted">
-                          Last updated: {alert.timestamp}
-                        </span>
-                      </div>
-                      <div className="w-24 bg-nexus-border rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            alert.current >= alert.threshold
-                              ? "bg-red-500"
-                              : "bg-orange-500"
-                          }`}
-                          style={{
-                            width: `${Math.min(
-                              100,
-                              (alert.current / alert.threshold) * 100
-                            )}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {editingAlert === alert.id && (
-                      <div className="mt-4 pt-4 border-t border-nexus-border space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs font-medium text-nexus-text-muted">
-                              Threshold
-                            </label>
-                            <Input
-                              type="number"
-                              defaultValue={alert.threshold}
-                              className="nexus-input h-8"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-nexus-text-muted">
-                              Priority
-                            </label>
-                            <Select defaultValue={alert.priority}>
-                              <SelectTrigger className="nexus-input h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-nexus-card border-nexus-border">
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="low">Low</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          <Badge className={getStatusColor(alert.status)}>
+                            {alert.status}
+                          </Badge>
+                          {!alert.enabled && (
+                            <Badge className="bg-gray-100 text-gray-800">
+                              Disabled
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex gap-2">
-                          <Button className="nexus-action-btn bg-green-600 hover:bg-green-700 text-white">
-                            Save Changes
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            className={`h-8 px-2 ${
+                              alert.enabled
+                                ? "dark:bg-orange-600 bg-orange-700 dark:text-white text-white dark:hover:bg-orange-500 hover:bg-orange-600"
+                                : "dark:bg-green-600 bg-green-700 dark:text-white text-white dark:hover:bg-green-500 hover:bg-green-600"
+                            } shadow-sm hover:shadow-md transition-all rounded-full`}
+                            onClick={() => handleToggleAlert(alert.id)}
+                          >
+                            {alert.enabled ? (
+                              <XCircle className="w-3 h-3" />
+                            ) : (
+                              <CheckCircle className="w-3 h-3" />
+                            )}
                           </Button>
                           <Button
-                            className="nexus-action-btn"
-                            onClick={() => setEditingAlert(null)}
+                            variant="ghost"
+                            className="h-8 px-2 dark:text-gray-200 text-gray-900 shadow-sm hover:shadow-md dark:hover:bg-slate-700 hover:bg-gray-100 transition-all rounded-full"
+                            onClick={() => handleEditAlert(alert.id)}
                           >
-                            Cancel
+                            <Edit className="w-3 h-3 mr-1" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="h-8 px-2 dark:text-red-400 text-red-600 shadow-sm hover:shadow-md dark:hover:bg-red-900/20 hover:bg-red-50 transition-all rounded-full"
+                            onClick={() => handleDeleteAlert(alert.id)}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
                           </Button>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      <div className="mb-3">
+                        <h3 className="font-semibold text-lg text-nexus-text">
+                          {alert.keyword}
+                        </h3>
+                        <p className="text-sm text-nexus-text-muted">
+                          {alert.district} • Threshold: {alert.threshold}{" "}
+                          mentions
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-nexus-text-muted">
+                            Current:{" "}
+                            <span className="font-medium text-red-500">
+                              {alert.current}
+                            </span>
+                          </span>
+                          <span className="text-nexus-text-muted">
+                            Threshold:{" "}
+                            <span className="font-medium text-nexus-text">
+                              {alert.threshold}
+                            </span>
+                          </span>
+                          <span className="text-nexus-text-muted">
+                            Last updated: {alert.timestamp}
+                          </span>
+                        </div>
+                        <div className="w-24 bg-nexus-border rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              alert.current >= alert.threshold
+                                ? "bg-red-500"
+                                : "bg-orange-500"
+                            }`}
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                (alert.current / alert.threshold) * 100
+                              )}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {editingAlert === alert.id && (
+                        <div className="mt-4 pt-4 border-t border-nexus-border space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-medium text-nexus-text-muted">
+                                Threshold
+                              </label>
+                              <Input
+                                type="number"
+                                value={editThreshold}
+                                onChange={(e) =>
+                                  setEditThreshold(e.target.value)
+                                }
+                                className="nexus-input h-8"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium text-nexus-text-muted">
+                                Priority
+                              </label>
+                              <Select
+                                value={editPriority}
+                                onValueChange={setEditPriority}
+                              >
+                                <SelectTrigger className="nexus-input h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-nexus-card border-nexus-border text-black dark:text-white">
+                                  <SelectItem value="high">High</SelectItem>
+                                  <SelectItem value="medium">Medium</SelectItem>
+                                  <SelectItem value="low">Low</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleSaveAlert(alert.id)}
+                              className="bg-green-500 h-8 px-2 dark:text-white text-white shadow-sm hover:shadow-md dark:hover:bg-green-500 hover:bg-green-600 transition-all rounded-md"
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              variant={"ghost"}
+                              className="h-8 px-2 dark:text-gray-200 text-gray-900 hover:bg-gray-100 dark:hover:bg-slate-700 shadow-sm transition-all rounded-full"
+                              onClick={handleCancelEdit}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
               </div>
             </CardContent>
           </Card>

@@ -11,17 +11,13 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   AlertTriangle,
-  Bell,
   Brain,
   Clock,
+  Loader2,
   MapPin,
   Settings,
-  TrendingUp,
   Zap,
-  Loader2,
-  Shuffle,
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
@@ -51,26 +47,27 @@ const generateRandomTimestamp = () => {
     "2 hours ago",
     "3 hours ago",
     "4 hours ago",
-    "6 hours ago"
+    "6 hours ago",
   ];
   return timeOptions[Math.floor(Math.random() * timeOptions.length)];
 };
 
 const generateNewAlertHistory = () => {
   const dates = ["Jan 1", "Jan 2", "Jan 3", "Jan 4", "Jan 5", "Jan 6", "Jan 7"];
-  return dates.map(date => {
+  return dates.map((date) => {
     const totalAlerts = Math.floor(Math.random() * 6) + 1; // 1-6 alerts
-    const aiAlerts = Math.floor(Math.random() * totalAlerts) + Math.floor(totalAlerts * 0.3); // At least 30% AI alerts
+    const aiAlerts =
+      Math.floor(Math.random() * totalAlerts) + Math.floor(totalAlerts * 0.3); // At least 30% AI alerts
     return {
       date,
       alerts: totalAlerts,
-      aiAlerts: Math.min(aiAlerts, totalAlerts) // Ensure AI alerts don't exceed total
+      aiAlerts: Math.min(aiAlerts, totalAlerts), // Ensure AI alerts don't exceed total
     };
   });
 };
 
 const randomizeThresholds = (currentThresholds: typeof initialThresholds) => {
-  return currentThresholds.map(threshold => {
+  return currentThresholds.map((threshold) => {
     let newValue;
     switch (threshold.metric) {
       case "Mention Spike":
@@ -95,12 +92,14 @@ const randomizeThresholds = (currentThresholds: typeof initialThresholds) => {
 const generateRandomDashboardMetrics = () => {
   const changeOptions = [-3, -2, -1, 0, 1, 2, 3];
   const improvementOptions = [-6, -5, -4, -3, -2, -1, 0, 1];
-  
+
   return {
     aiConfidence: Math.floor(Math.random() * 25) + 75, // 75-99%
     responseTime: Math.floor(Math.random() * 10) + 5, // 5-14 minutes
-    yesterdayChange: changeOptions[Math.floor(Math.random() * changeOptions.length)],
-    responseImprovement: improvementOptions[Math.floor(Math.random() * improvementOptions.length)]
+    yesterdayChange:
+      changeOptions[Math.floor(Math.random() * changeOptions.length)],
+    responseImprovement:
+      improvementOptions[Math.floor(Math.random() * improvementOptions.length)],
   };
 };
 
@@ -194,13 +193,13 @@ export default function EarlyWarningsPage() {
   const [alertHistoryData, setAlertHistoryData] = useState(alertHistory);
   const [isUpdatingThresholds, setIsUpdatingThresholds] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  
+
   // Dashboard metrics state
   const [dashboardMetrics, setDashboardMetrics] = useState({
     aiConfidence: 87,
     responseTime: 8,
     yesterdayChange: -1,
-    responseImprovement: -4
+    responseImprovement: -4,
   });
 
   const currentTime = new Date();
@@ -238,21 +237,21 @@ export default function EarlyWarningsPage() {
       setIsUpdatingThresholds(true);
       setIsSearching(true);
       console.log("Updating thresholds:", thresholds);
-      
+
       // Validate thresholds before sending
-      const validThresholds = thresholds.every(threshold => 
-        threshold.current > 0 && !isNaN(threshold.current)
+      const validThresholds = thresholds.every(
+        (threshold) => threshold.current > 0 && !isNaN(threshold.current)
       );
-      
+
       if (!validThresholds) {
         // Use a more user-friendly notification instead of alert
         console.error("Invalid threshold values");
         return;
       }
-      
+
       // Simulate AI searching and processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // Here you would typically send the updated thresholds to your API
       // Example API call:
       // const response = await fetch('/api/update-thresholds', {
@@ -262,44 +261,45 @@ export default function EarlyWarningsPage() {
       //   },
       //   body: JSON.stringify({ thresholds }),
       // });
-      // 
+      //
       // if (!response.ok) {
       //   throw new Error('Failed to update thresholds');
       // }
-      
+
       // Reshuffle alerts and update numbers to simulate real-time changes
       const shuffledAlerts = [...alerts].sort(() => Math.random() - 0.5);
-      
+
       // Update alert numbers to make them look more realistic
-      const updatedAlerts = shuffledAlerts.map(alert => ({
+      const updatedAlerts = shuffledAlerts.map((alert) => ({
         ...alert,
         current: generateRealisticAlertValue(alert.type),
-        confidence: alert.aiGenerated ? Math.floor(Math.random() * 20) + 70 : alert.confidence, // 70-89% for AI alerts
-        timestamp: generateRandomTimestamp()
+        confidence: alert.aiGenerated
+          ? Math.floor(Math.random() * 20) + 70
+          : alert.confidence, // 70-89% for AI alerts
+        timestamp: generateRandomTimestamp(),
       }));
-      
+
       setAlerts(updatedAlerts);
-      
+
       // Randomize thresholds to simulate dynamic adjustments
       const newRandomThresholds = randomizeThresholds(thresholds);
       setThresholds(newRandomThresholds);
-      
+
       // Generate new alert history data
       const newAlertHistory = generateNewAlertHistory();
       setAlertHistoryData(newAlertHistory);
-      
+
       // Update dashboard metrics
       const newDashboardMetrics = generateRandomDashboardMetrics();
       setDashboardMetrics(newDashboardMetrics);
-      
+
       // Simulate finding new alerts based on updated thresholds
       setIsSearching(false);
       console.log("Thresholds updated successfully!");
-      
+
       // Optional: You could trigger a re-evaluation of existing alerts based on new thresholds
       // This would typically be handled on the backend, but for demonstration:
       // refetchAlertsWithNewThresholds();
-      
     } catch (error) {
       console.error("Error updating thresholds:", error);
       setIsSearching(false);
@@ -310,7 +310,7 @@ export default function EarlyWarningsPage() {
 
   const handleReshuffleAlerts = () => {
     setIsSearching(true);
-    
+
     // Simulate AI re-analyzing and reshuffling alerts
     setTimeout(() => {
       const shuffledAlerts = [...alerts].sort(() => Math.random() - 0.5);
@@ -358,8 +358,15 @@ export default function EarlyWarningsPage() {
             <div className="text-2xl font-bold text-nexus-text">
               {alerts.filter((a) => a.severity === "high").length}
             </div>
-            <p className={`text-xs ${dashboardMetrics.yesterdayChange <= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {dashboardMetrics.yesterdayChange > 0 ? '+' : ''}{dashboardMetrics.yesterdayChange} from yesterday
+            <p
+              className={`text-xs ${
+                dashboardMetrics.yesterdayChange <= 0
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
+            >
+              {dashboardMetrics.yesterdayChange > 0 ? "+" : ""}
+              {dashboardMetrics.yesterdayChange} from yesterday
             </p>
           </CardContent>
         </Card>
@@ -372,7 +379,9 @@ export default function EarlyWarningsPage() {
             <Brain className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-nexus-text">{dashboardMetrics.aiConfidence}%</div>
+            <div className="text-2xl font-bold text-nexus-text">
+              {dashboardMetrics.aiConfidence}%
+            </div>
             <p className="text-xs text-purple-500">Average accuracy</p>
           </CardContent>
         </Card>
@@ -385,9 +394,18 @@ export default function EarlyWarningsPage() {
             <Clock className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-nexus-text">{dashboardMetrics.responseTime}m</div>
-            <p className={`text-xs ${dashboardMetrics.responseImprovement <= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {dashboardMetrics.responseImprovement > 0 ? '+' : ''}{dashboardMetrics.responseImprovement}m improvement
+            <div className="text-2xl font-bold text-nexus-text">
+              {dashboardMetrics.responseTime}m
+            </div>
+            <p
+              className={`text-xs ${
+                dashboardMetrics.responseImprovement <= 0
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
+            >
+              {dashboardMetrics.responseImprovement > 0 ? "+" : ""}
+              {dashboardMetrics.responseImprovement}m improvement
             </p>
           </CardContent>
         </Card>
@@ -426,7 +444,9 @@ export default function EarlyWarningsPage() {
                       AI Intelligence Processing
                     </h3>
                     <p className="text-sm text-nexus-text-muted max-w-md">
-                      Neural networks are analyzing health patterns, social media mentions, and geographical data to identify emerging threats...
+                      Neural networks are analyzing health patterns, social
+                      media mentions, and geographical data to identify emerging
+                      threats...
                     </p>
                     <div className="flex items-center justify-center gap-2 mt-4">
                       <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-pulse"></div>
@@ -438,142 +458,164 @@ export default function EarlyWarningsPage() {
               ) : (
                 <div className="space-y-4">
                   {alerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className={`nexus-card p-4 cursor-pointer transition-colors ${
-                      selectedAlert === alert.id
-                        ? "border-nexus-cyan bg-nexus-cyan/5"
-                        : "hover:bg-nexus-hover"
-                    }`}
-                    onClick={() =>
-                      setSelectedAlert(
-                        selectedAlert === alert.id ? null : alert.id
-                      )
-                    }
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
+                    <div
+                      key={alert.id}
+                      className={`nexus-card p-4 cursor-pointer transition-colors ${
+                        selectedAlert === alert.id
+                          ? "border-nexus-cyan bg-nexus-cyan/5"
+                          : "hover:bg-nexus-hover"
+                      }`}
+                      onClick={() =>
+                        setSelectedAlert(
+                          selectedAlert === alert.id ? null : alert.id
+                        )
+                      }
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={
+                              alert.severity === "high"
+                                ? "bg-red-100 text-red-800"
+                                : alert.severity === "medium"
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-green-100 text-green-800"
+                            }
+                          >
+                            {alert.severity}
+                          </Badge>
+                          <Badge className="bg-purple-100 text-purple-800">
+                            {alert.type.replace("_", " ")}
+                          </Badge>
+                          {alert.aiGenerated && (
+                            <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">
+                              <Brain className="w-3 h-3" />
+                              AI
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-nexus-text-muted">
+                          <Clock className="w-3 h-3" />
+                          {alert.timestamp}
+                        </div>
+                      </div>
+
+                      <h3 className="font-semibold text-nexus-text mb-1">
+                        {alert.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2 text-sm text-nexus-text-muted">
+                        <MapPin className="w-3 h-3" />
+                        {alert.location}
+                      </div>
+
+                      <p className="text-sm text-nexus-text-muted mb-3">
+                        {alert.description}
+                      </p>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-nexus-text-muted">
+                            Threshold:{" "}
+                            <span className="font-medium text-nexus-text">
+                              {alert.threshold}
+                            </span>
+                          </span>
+                          <span className="text-nexus-text-muted">
+                            Current:{" "}
+                            <span className="font-medium text-orange-500">
+                              {alert.current}
+                            </span>
+                          </span>
+                          {alert.aiGenerated && (
+                            <span className="text-nexus-text-muted">
+                              Confidence:{" "}
+                              <span className="font-medium text-purple-500">
+                                {alert.confidence}%
+                              </span>
+                            </span>
+                          )}
+                        </div>
                         <Badge
                           className={
-                            alert.severity === "high"
+                            alert.status === "active"
                               ? "bg-red-100 text-red-800"
-                              : alert.severity === "medium"
+                              : alert.status === "investigating"
                               ? "bg-orange-100 text-orange-800"
                               : "bg-green-100 text-green-800"
                           }
                         >
-                          {alert.severity}
+                          {alert.status}
                         </Badge>
-                        <Badge className="bg-purple-100 text-purple-800">
-                          {alert.type.replace("_", " ")}
-                        </Badge>
-                        {alert.aiGenerated && (
-                          <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">
-                            <Brain className="w-3 h-3" />
-                            AI
-                          </Badge>
-                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-nexus-text-muted">
-                        <Clock className="w-3 h-3" />
-                        {alert.timestamp}
-                      </div>
+
+                      {selectedAlert === alert.id && (
+                        <div className="mt-4 pt-4 border-t border-nexus-border flex gap-2">
+                          <Button className="nexus-action-btn bg-nexus-cyan text-nexus-dark hover:bg-nexus-cyan/80">
+                            Investigate
+                          </Button>
+                          <Button className="nexus-action-btn">
+                            Acknowledge
+                          </Button>
+                          <Button className="nexus-action-btn">Escalate</Button>
+                        </div>
+                      )}
                     </div>
-
-                    <h3 className="font-semibold text-nexus-text mb-1">
-                      {alert.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mb-2 text-sm text-nexus-text-muted">
-                      <MapPin className="w-3 h-3" />
-                      {alert.location}
-                    </div>
-
-                    <p className="text-sm text-nexus-text-muted mb-3">
-                      {alert.description}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="text-nexus-text-muted">
-                          Threshold:{" "}
-                          <span className="font-medium text-nexus-text">
-                            {alert.threshold}
-                          </span>
-                        </span>
-                        <span className="text-nexus-text-muted">
-                          Current:{" "}
-                          <span className="font-medium text-orange-500">
-                            {alert.current}
-                          </span>
-                        </span>
-                        {alert.aiGenerated && (
-                          <span className="text-nexus-text-muted">
-                            Confidence:{" "}
-                            <span className="font-medium text-purple-500">
-                              {alert.confidence}%
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                      <Badge
-                        className={
-                          alert.status === "active"
-                            ? "bg-red-100 text-red-800"
-                            : alert.status === "investigating"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-green-100 text-green-800"
-                        }
-                      >
-                        {alert.status}
-                      </Badge>
-                    </div>
-
-                    {selectedAlert === alert.id && (
-                      <div className="mt-4 pt-4 border-t border-nexus-border flex gap-2">
-                        <Button className="nexus-action-btn bg-nexus-cyan text-nexus-dark hover:bg-nexus-cyan/80">
-                          Investigate
-                        </Button>
-                        <Button className="nexus-action-btn">
-                          Acknowledge
-                        </Button>
-                        <Button className="nexus-action-btn">Escalate</Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
-
           {/* Alert History Chart */}
-          <Card className="nexus-card mt-6">
+          <Card className="mt-4 nexus-card">
             <CardHeader>
-              <CardTitle className="text-nexus-text">
+              <CardTitle className="dark:text-gray-100 text-gray-900">
                 Alert History (7 Days)
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-48">
+              <div className="h-[200px] sm:h-[300px] w-full">
                 <ChartContainer
                   config={{
                     alerts: { label: "Total Alerts", color: "#00d4ff" },
                     aiAlerts: { label: "AI Alerts", color: "#a855f7" },
                   }}
-                  className="h-full"
+                  className="h-full w-full"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={alertHistoryData}>
+                    <LineChart
+                      data={alertHistoryData}
+                      margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                    >
                       <XAxis
                         dataKey="date"
-                        tick={{ fontSize: 12, fill: "#64748b" }}
-                        tickLine={{ stroke: "#334155" }}
-                        axisLine={{ stroke: "#334155" }}
+                        tick={{
+                          fontSize: 12,
+                          className: "dark:fill-white fill-gray-600",
+                        }}
+                        tickLine={{
+                          className: "dark:stroke-gray-400 stroke-gray-500",
+                        }}
+                        axisLine={{
+                          className: "dark:stroke-gray-400 stroke-gray-500",
+                        }}
                       />
                       <YAxis
-                        tick={{ fontSize: 12, fill: "#64748b" }}
-                        tickLine={{ stroke: "#334155" }}
-                        axisLine={{ stroke: "#334155" }}
+                        tick={{
+                          fontSize: 12,
+                          className: "dark:fill-white fill-gray-600",
+                        }}
+                        tickLine={{
+                          className: "dark:stroke-gray-400 stroke-gray-500",
+                        }}
+                        axisLine={{
+                          className: "dark:stroke-gray-400 stroke-gray-500",
+                        }}
+                        label={{
+                          value: "Alerts",
+                          angle: -90,
+                          position: "insideLeft",
+                          className: "dark:fill-white fill-gray-600",
+                        }}
                       />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Line
@@ -634,7 +676,7 @@ export default function EarlyWarningsPage() {
                 <Button
                   onClick={handleUpdateThresholds}
                   disabled={isUpdatingThresholds || isSearching}
-                  className="w-full nexus-action-btn bg-nexus-cyan text-nexus-dark hover:bg-nexus-cyan/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {isUpdatingThresholds ? (
                     <div className="flex items-center gap-2">
@@ -684,31 +726,6 @@ export default function EarlyWarningsPage() {
                   <Badge className="nexus-badge-active">Active</Badge>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="nexus-card">
-            <CardHeader>
-              <CardTitle className="text-nexus-text">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Link href="/trend-analyzer">
-                <Button className="w-full nexus-action-btn justify-start">
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Analyze Patterns
-                </Button>
-              </Link>
-              <Link href="/social-heatmap">
-                <Button className="w-full nexus-action-btn justify-start">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  View Heatmap
-                </Button>
-              </Link>
-              <Button className="w-full nexus-action-btn justify-start">
-                <Bell className="w-4 h-4 mr-2" />
-                Test AI Alerts
-              </Button>
             </CardContent>
           </Card>
         </div>

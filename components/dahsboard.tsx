@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import {
   AlertTriangle,
   BarChart3,
@@ -17,9 +16,9 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import AIIntelligenceAlerts from "./ai-intelligence-alerts";
 import EnhancedMalaysiaMap from "./enhanced-malaysia-map";
+import OutbreakRiskChart from "./outbreak-chart";
 import {
   Dialog,
   DialogContent,
@@ -375,7 +374,7 @@ export default function MySihatDashboard() {
                       onThreatClick={(name) => handleThreatClick(name)}
                     />
                   </div>
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="mt-2 flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -400,117 +399,7 @@ export default function MySihatDashboard() {
               </Card>
 
               {/* Trend Chart */}
-              <Card className="nexus-card">
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-nexus-text flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-nexus-cyan" />
-                    Outbreak Risk Trend Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-64">
-                    <ChartContainer
-                      config={{
-                        mentions: { label: "Mentions", color: "#00d4ff" },
-                        outbreakRisk: {
-                          label: "Outbreak Risk",
-                          color: "#f97316",
-                        },
-                      }}
-                      className="h-full"
-                    >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={mockHealthData.trendData}>
-                          <defs>
-                            <linearGradient
-                              id="mentionsGradient"
-                              x1="0"
-                              y1="0"
-                              x2="0"
-                              y2="1"
-                            >
-                              <stop
-                                offset="5%"
-                                stopColor="#00d4ff"
-                                stopOpacity={0.3}
-                              />
-                              <stop
-                                offset="95%"
-                                stopColor="#00d4ff"
-                                stopOpacity={0.05}
-                              />
-                            </linearGradient>
-                            <linearGradient
-                              id="riskGradient"
-                              x1="0"
-                              y1="0"
-                              x2="0"
-                              y2="1"
-                            >
-                              <stop
-                                offset="5%"
-                                stopColor="#f97316"
-                                stopOpacity={0.3}
-                              />
-                              <stop
-                                offset="95%"
-                                stopColor="#f97316"
-                                stopOpacity={0.05}
-                              />
-                            </linearGradient>
-                          </defs>
-                          <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: 12, fill: "#64748b" }}
-                            tickLine={{ stroke: "#334155" }}
-                            axisLine={{ stroke: "#334155" }}
-                          />
-                          <YAxis
-                            tick={{ fontSize: 12, fill: "#64748b" }}
-                            tickLine={{ stroke: "#334155" }}
-                            axisLine={{ stroke: "#334155" }}
-                          />
-                          <ChartTooltip
-                            content={({ active, payload, label }) => {
-                              if (active && payload && payload.length) {
-                                return (
-                                  <div className="nexus-tooltip">
-                                    <p className="font-semibold text-nexus-text">
-                                      {label}
-                                    </p>
-                                    <p className="text-nexus-cyan">
-                                      Mentions:{" "}
-                                      {payload[0].value?.toLocaleString()}
-                                    </p>
-                                    <p className="text-orange-500">
-                                      Risk Score: {payload[1]?.value}%
-                                    </p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="mentions"
-                            stroke="#00d4ff"
-                            strokeWidth={2}
-                            fill="url(#mentionsGradient)"
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="outbreakRisk"
-                            stroke="#f97316"
-                            strokeWidth={2}
-                            fill="url(#riskGradient)"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
-                </CardContent>
-              </Card>
+              <OutbreakRiskChart />
             </div>
 
             {/* Right Sidebar */}
