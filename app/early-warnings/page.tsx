@@ -25,6 +25,85 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
+// Helper functions for generating realistic mock data
+const generateRealisticAlertValue = (alertType: string) => {
+  switch (alertType) {
+    case "outbreak_risk":
+      return `${Math.floor(Math.random() * 300) + 150}%`; // 150-449%
+    case "pattern_anomaly":
+      return `${Math.floor(Math.random() * 20) + 10} cases/hour`; // 10-29 cases/hour
+    case "early_warning":
+      return `${Math.floor(Math.random() * 40) + 20}%`; // 20-59%
+    case "keyword_spike":
+      return `${Math.floor(Math.random() * 25) + 15}%`; // 15-39%
+    default:
+      return `${Math.floor(Math.random() * 50) + 10}%`; // 10-59%
+  }
+};
+
+const generateRandomTimestamp = () => {
+  const timeOptions = [
+    "5 minutes ago",
+    "12 minutes ago",
+    "28 minutes ago",
+    "45 minutes ago",
+    "1 hour ago",
+    "2 hours ago",
+    "3 hours ago",
+    "4 hours ago",
+    "6 hours ago"
+  ];
+  return timeOptions[Math.floor(Math.random() * timeOptions.length)];
+};
+
+const generateNewAlertHistory = () => {
+  const dates = ["Jan 1", "Jan 2", "Jan 3", "Jan 4", "Jan 5", "Jan 6", "Jan 7"];
+  return dates.map(date => {
+    const totalAlerts = Math.floor(Math.random() * 6) + 1; // 1-6 alerts
+    const aiAlerts = Math.floor(Math.random() * totalAlerts) + Math.floor(totalAlerts * 0.3); // At least 30% AI alerts
+    return {
+      date,
+      alerts: totalAlerts,
+      aiAlerts: Math.min(aiAlerts, totalAlerts) // Ensure AI alerts don't exceed total
+    };
+  });
+};
+
+const randomizeThresholds = (currentThresholds: typeof initialThresholds) => {
+  return currentThresholds.map(threshold => {
+    let newValue;
+    switch (threshold.metric) {
+      case "Mention Spike":
+        newValue = Math.floor(Math.random() * 30) + 20; // 20-49%
+        break;
+      case "Geographic Clustering":
+        newValue = Math.floor(Math.random() * 8) + 3; // 3-10 km
+        break;
+      case "Time Window":
+        newValue = Math.floor(Math.random() * 8) + 4; // 4-11 hours
+        break;
+      case "AI Confidence":
+        newValue = Math.floor(Math.random() * 20) + 65; // 65-84%
+        break;
+      default:
+        newValue = threshold.current;
+    }
+    return { ...threshold, current: newValue };
+  });
+};
+
+const generateRandomDashboardMetrics = () => {
+  const changeOptions = [-3, -2, -1, 0, 1, 2, 3];
+  const improvementOptions = [-6, -5, -4, -3, -2, -1, 0, 1];
+  
+  return {
+    aiConfidence: Math.floor(Math.random() * 25) + 75, // 75-99%
+    responseTime: Math.floor(Math.random() * 10) + 5, // 5-14 minutes
+    yesterdayChange: changeOptions[Math.floor(Math.random() * changeOptions.length)],
+    responseImprovement: improvementOptions[Math.floor(Math.random() * improvementOptions.length)]
+  };
+};
+
 // Mock alert data focused on early detection
 const mockAlertData = [
   {
@@ -112,8 +191,17 @@ export default function EarlyWarningsPage() {
   const [selectedAlert, setSelectedAlert] = useState<number | null>(null);
   const [thresholds, setThresholds] = useState(initialThresholds);
   const [alerts, setAlerts] = useState(mockAlertData);
+  const [alertHistoryData, setAlertHistoryData] = useState(alertHistory);
   const [isUpdatingThresholds, setIsUpdatingThresholds] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Dashboard metrics state
+  const [dashboardMetrics, setDashboardMetrics] = useState({
+    aiConfidence: 87,
+    responseTime: 8,
+    yesterdayChange: -1,
+    responseImprovement: -4
+  });
 
   const currentTime = new Date();
   const timeString = currentTime.toLocaleTimeString("en-US", {
@@ -178,6 +266,31 @@ export default function EarlyWarningsPage() {
       // if (!response.ok) {
       //   throw new Error('Failed to update thresholds');
       // }
+      
+      // Reshuffle alerts and update numbers to simulate real-time changes
+      const shuffledAlerts = [...alerts].sort(() => Math.random() - 0.5);
+      
+      // Update alert numbers to make them look more realistic
+      const updatedAlerts = shuffledAlerts.map(alert => ({
+        ...alert,
+        current: generateRealisticAlertValue(alert.type),
+        confidence: alert.aiGenerated ? Math.floor(Math.random() * 20) + 70 : alert.confidence, // 70-89% for AI alerts
+        timestamp: generateRandomTimestamp()
+      }));
+      
+      setAlerts(updatedAlerts);
+      
+      // Randomize thresholds to simulate dynamic adjustments
+      const newRandomThresholds = randomizeThresholds(thresholds);
+      setThresholds(newRandomThresholds);
+      
+      // Generate new alert history data
+      const newAlertHistory = generateNewAlertHistory();
+      setAlertHistoryData(newAlertHistory);
+      
+      // Update dashboard metrics
+      const newDashboardMetrics = generateRandomDashboardMetrics();
+      setDashboardMetrics(newDashboardMetrics);
       
       // Simulate finding new alerts based on updated thresholds
       setIsSearching(false);
@@ -245,7 +358,9 @@ export default function EarlyWarningsPage() {
             <div className="text-2xl font-bold text-nexus-text">
               {alerts.filter((a) => a.severity === "high").length}
             </div>
-            <p className="text-xs text-green-500">-1 from yesterday</p>
+            <p className={`text-xs ${dashboardMetrics.yesterdayChange <= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {dashboardMetrics.yesterdayChange > 0 ? '+' : ''}{dashboardMetrics.yesterdayChange} from yesterday
+            </p>
           </CardContent>
         </Card>
 
@@ -257,7 +372,7 @@ export default function EarlyWarningsPage() {
             <Brain className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-nexus-text">87%</div>
+            <div className="text-2xl font-bold text-nexus-text">{dashboardMetrics.aiConfidence}%</div>
             <p className="text-xs text-purple-500">Average accuracy</p>
           </CardContent>
         </Card>
@@ -270,8 +385,10 @@ export default function EarlyWarningsPage() {
             <Clock className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-nexus-text">8m</div>
-            <p className="text-xs text-green-500">-4m improvement</p>
+            <div className="text-2xl font-bold text-nexus-text">{dashboardMetrics.responseTime}m</div>
+            <p className={`text-xs ${dashboardMetrics.responseImprovement <= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {dashboardMetrics.responseImprovement > 0 ? '+' : ''}{dashboardMetrics.responseImprovement}m improvement
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -446,7 +563,7 @@ export default function EarlyWarningsPage() {
                   className="h-full"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={alertHistory}>
+                    <LineChart data={alertHistoryData}>
                       <XAxis
                         dataKey="date"
                         tick={{ fontSize: 12, fill: "#64748b" }}
