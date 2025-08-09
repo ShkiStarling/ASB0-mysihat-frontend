@@ -23,78 +23,78 @@ import {
 import { useState } from "react";
 
 // Mock alert data
-const mockAlertData = {
-  activeAlerts: [
-    {
-      id: 1,
-      keyword: "denggi + Klang Valley",
-      threshold: 50,
-      current: 127,
-      status: "triggered",
-      district: "Petaling",
-      timestamp: "2024-01-15 14:30",
-      priority: "high",
-      enabled: true,
-    },
-    {
-      id: 2,
-      keyword: "batuk berdarah + Johor",
-      threshold: 30,
-      current: 45,
-      status: "triggered",
-      district: "Johor Bahru",
-      timestamp: "2024-01-15 13:15",
-      priority: "medium",
-      enabled: true,
-    },
-    {
-      id: 3,
-      keyword: "demam campak + Sabah",
-      threshold: 20,
-      current: 18,
-      status: "monitoring",
-      district: "Kota Kinabalu",
-      timestamp: "2024-01-15 12:00",
-      priority: "low",
-      enabled: true,
-    },
-    {
-      id: 4,
-      keyword: "sakit perut + Penang",
-      threshold: 25,
-      current: 12,
-      status: "normal",
-      district: "George Town",
-      timestamp: "2024-01-15 11:30",
-      priority: "medium",
-      enabled: false,
-    },
-  ],
-  keywordSuggestions: [
-    "demam denggi",
-    "batuk kering",
-    "sakit kepala teruk",
-    "muntah-muntah",
-    "cirit-birit",
-    "ruam kulit",
-    "sesak nafas",
-    "demam tinggi",
-    "sakit tekak",
-    "gatal-gatal",
-  ],
-  locationSuggestions: [
-    "Klang Valley",
-    "Johor Bahru",
-    "Penang",
-    "Sabah",
-    "Sarawak",
-    "Kedah",
-    "Kelantan",
-    "Terengganu",
-    "Pahang",
-    "Perak",
-  ],
-};
+const mockActiveAlerts = [
+  {
+    id: 1,
+    keyword: "denggi + Klang Valley",
+    threshold: 50,
+    current: 127,
+    status: "triggered",
+    district: "Petaling",
+    timestamp: "2024-01-15 14:30",
+    priority: "high",
+    enabled: true,
+  },
+  {
+    id: 2,
+    keyword: "batuk berdarah + Johor",
+    threshold: 30,
+    current: 45,
+    status: "triggered",
+    district: "Johor Bahru",
+    timestamp: "2024-01-15 13:15",
+    priority: "medium",
+    enabled: true,
+  },
+  {
+    id: 3,
+    keyword: "demam campak + Sabah",
+    threshold: 20,
+    current: 18,
+    status: "monitoring",
+    district: "Kota Kinabalu",
+    timestamp: "2024-01-15 12:00",
+    priority: "low",
+    enabled: true,
+  },
+  {
+    id: 4,
+    keyword: "sakit perut + Penang",
+    threshold: 25,
+    current: 12,
+    status: "normal",
+    district: "George Town",
+    timestamp: "2024-01-15 11:30",
+    priority: "medium",
+    enabled: false,
+  },
+];
+
+const keywordSuggestions = [
+  "demam denggi",
+  "batuk kering",
+  "sakit kepala teruk",
+  "muntah-muntah",
+  "cirit-birit",
+  "ruam kulit",
+  "sesak nafas",
+  "demam tinggi",
+  "sakit tekak",
+  "gatal-gatal",
+];
+
+const locationSuggestions = [
+  "Klang Valley",
+  "Johor Bahru",
+  "Penang",
+  "Sabah",
+  "Sarawak",
+  "Kedah",
+  "Kelantan",
+  "Terengganu",
+  "Pahang",
+  "Perak",
+];
 
 export default function KeywordManagerPage() {
   const [newKeyword, setNewKeyword] = useState("");
@@ -102,6 +102,7 @@ export default function KeywordManagerPage() {
   const [newThreshold, setNewThreshold] = useState("");
   const [newPriority, setNewPriority] = useState("medium");
   const [editingAlert, setEditingAlert] = useState<number | null>(null);
+  const [keywordData, setKeywordData] = useState(mockActiveAlerts);
 
   const currentTime = new Date();
   const timeString = currentTime.toLocaleTimeString("en-US", {
@@ -113,12 +114,60 @@ export default function KeywordManagerPage() {
 
   const handleAddAlert = () => {
     if (newKeyword && newThreshold) {
-      console.log("Adding new alert:", {
-        keyword: newKeyword + (newLocation ? ` + ${newLocation}` : ""),
-        threshold: Number.parseInt(newThreshold),
-        priority: newPriority,
+      // Generate a unique ID by finding the max existing ID and adding 1
+      const maxId = mockActiveAlerts.length > 0 
+        ? Math.max(...mockActiveAlerts.map(alert => alert.id))
+        : 0;
+      
+      // Parse threshold and validate it's a positive number
+      const parsedThreshold = Number.parseInt(newThreshold);
+      if (isNaN(parsedThreshold) || parsedThreshold <= 0) {
+        console.error("Invalid threshold value:", newThreshold);
+        return;
+      }
+
+      // Generate current timestamp
+      const currentTimestamp = new Date().toLocaleString("en-US", {
+        year: "numeric",
+        month: "2-digit", 
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
       });
-      // Reset form
+
+      // Determine status based on threshold (mock logic)
+      const mockCurrentMentions = Math.floor(Math.random() * (parsedThreshold * 1.5));
+      const status = mockCurrentMentions >= parsedThreshold 
+        ? "triggered" 
+        : mockCurrentMentions >= parsedThreshold * 0.8 
+        ? "monitoring" 
+        : "normal";
+
+      // Extract district from location or set default
+      const district = newLocation && newLocation !== "allMalaysia" 
+        ? newLocation 
+        : "All Malaysia";
+
+      const newKeywordAdd = {
+        id: maxId + 1,
+        keyword: newKeyword + (newLocation && newLocation !== "allMalaysia" ? ` + ${newLocation}` : ""),
+        current: mockCurrentMentions,
+        status: status,
+        district: district,
+        timestamp: currentTimestamp,
+        priority: newPriority,
+        enabled: true, // Enable by default for new alerts
+        threshold: parsedThreshold,
+      };
+      
+      // Add to mockActiveAlerts
+      mockActiveAlerts.push(newKeywordAdd);
+      
+      // Update state to trigger re-render
+      setKeywordData([...mockActiveAlerts]);
+
+      // Clear form fields
       setNewKeyword("");
       setNewLocation("");
       setNewThreshold("");
@@ -128,6 +177,16 @@ export default function KeywordManagerPage() {
 
   const handleDeleteAlert = (alertId: number) => {
     console.log("Deleting alert:", alertId);
+
+    // Remove the alert from the mockActiveAlerts array
+    const updatedAlerts = mockActiveAlerts.filter(alert => alert.id !== alertId);
+    
+    // Update the mockActiveAlerts array
+    mockActiveAlerts.length = 0;
+    mockActiveAlerts.push(...updatedAlerts);
+    
+    // Force a re-render by updating the keywordData state
+    setKeywordData([...updatedAlerts]);
   };
 
   const handleToggleAlert = (alertId: number) => {
@@ -182,7 +241,7 @@ export default function KeywordManagerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-nexus-text">
-              {mockAlertData.activeAlerts.length}
+              {mockActiveAlerts.length}
             </div>
             <p className="text-xs text-nexus-text-muted">Configured keywords</p>
           </CardContent>
@@ -197,11 +256,7 @@ export default function KeywordManagerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-nexus-text">
-              {
-                mockAlertData.activeAlerts.filter(
-                  (a) => a.status === "triggered"
-                ).length
-              }
+              {mockActiveAlerts.filter((a) => a.status === "triggered").length}
             </div>
             <p className="text-xs text-red-500">Requiring attention</p>
           </CardContent>
@@ -216,11 +271,7 @@ export default function KeywordManagerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-nexus-text">
-              {
-                mockAlertData.activeAlerts.filter(
-                  (a) => a.status === "monitoring"
-                ).length
-              }
+              {mockActiveAlerts.filter((a) => a.status === "monitoring").length}
             </div>
             <p className="text-xs text-orange-500">Below threshold</p>
           </CardContent>
@@ -268,17 +319,15 @@ export default function KeywordManagerPage() {
                       AI Suggestions:
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {mockAlertData.keywordSuggestions
-                        .slice(0, 6)
-                        .map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            onClick={() => setNewKeyword(suggestion)}
-                            className="text-xs bg-nexus-card hover:bg-nexus-hover px-2 py-1 rounded border border-nexus-border text-nexus-text transition-colors"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
+                      {keywordSuggestions.slice(0, 6).map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          onClick={() => setNewKeyword(suggestion)}
+                          className="text-xs bg-nexus-card hover:bg-nexus-hover px-2 py-1 rounded border border-nexus-border text-nexus-text transition-colors"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -293,7 +342,7 @@ export default function KeywordManagerPage() {
                     </SelectTrigger>
                     <SelectContent className="bg-nexus-card border-nexus-border">
                       <SelectItem value="allMalaysia">All Malaysia</SelectItem>
-                      {mockAlertData.locationSuggestions.map((location) => (
+                      {locationSuggestions.map((location) => (
                         <SelectItem key={location} value={location}>
                           {location}
                         </SelectItem>
@@ -371,7 +420,7 @@ export default function KeywordManagerPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockAlertData.activeAlerts.map((alert) => (
+                {mockActiveAlerts.map((alert) => (
                   <div key={alert.id} className="nexus-card p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
