@@ -33,6 +33,12 @@ function EnhancedMalaysiaMap({
   useEffect(() => {
     if (!mapRef.current || typeof window === "undefined") return;
 
+    // Clean up any existing map instance
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
+
     import("leaflet").then((L) => {
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -43,6 +49,12 @@ function EnhancedMalaysiaMap({
         shadowUrl:
           "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
       });
+
+      // Ensure the container is empty before initializing
+      if (mapRef.current) {
+        mapRef.current.innerHTML = '';
+        (mapRef.current as any)._leaflet_id = null;
+      }
 
       const map = L.map(mapRef.current!, {
         zoomControl: false,
@@ -317,6 +329,11 @@ function EnhancedMalaysiaMap({
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+      }
+      // Also clean up the DOM element
+      if (mapRef.current) {
+        mapRef.current.innerHTML = '';
+        (mapRef.current as any)._leaflet_id = null;
       }
     };
   }, [filteredDistricts, selectedDistrict, onThreatClick]);
