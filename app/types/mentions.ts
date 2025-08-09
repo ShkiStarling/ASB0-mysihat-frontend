@@ -11,9 +11,9 @@ export interface Mention {
   summary: string;
   imageUrl: string;
   link: string;
-  mediaType: MediaType;
+  media_type: MediaType;
   mediaOutlet: string;
-  mediaName: string;
+  media_name: string;
   status: MentionStatus;
   keywords: string[];
   engagement: number;
@@ -23,6 +23,26 @@ export interface Mention {
  * Media type enum - matches your mock data values
  */
 export type MediaType = "social media" | "mainstream" | "all";
+
+// types/mentions.ts
+export type MediaName =
+  | "all"
+  | "The Star"
+  | "Malay Mail"
+  | "New Straits Times"
+  | "Bernama"
+  | "Free Malaysia Today"
+  | "The Edge Malaysia"
+  | "The Borneo Post"
+  | "Daily Express"
+  | "Malaysiakini"
+  | "The Straits Times"
+  | "X"
+  | "Reddit"
+  | "Instagram"
+  | "TikTok"
+  | "Facebook"
+  | "YouTube";
 
 /**
  * Mention verification status
@@ -55,6 +75,7 @@ export interface MentionApiResponse {
   total: number;
   page: number;
   totalPages: number;
+  limit: number;
 }
 
 /**
@@ -64,7 +85,7 @@ export interface MentionApiParams {
   page?: number;
   limit?: number;
   keyword?: string | "all";
-  mediaType?: MediaType | "all";
+  mediaName?: MediaName | "all";
   status?: MentionStatus | "all";
   search?: string;
   dateRange?: DateRange;
@@ -119,7 +140,7 @@ export interface MentionFiltersProps {
  */
 export type FilterType =
   | "keyword"
-  | "mediaType"
+  | "mediaName"
   | "status"
   | "dateRange"
   | "search";

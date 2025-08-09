@@ -1,3 +1,4 @@
+import { MediaName, MentionApiResponse } from "@/app/types/mentions";
 import { supabase } from "@/app/utils/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "5");
     const keyword = searchParams.get("keyword") || "all";
-    const mediaType = searchParams.get("mediaType") || "all";
+    const mediaName = searchParams.get("mediaName") || "all";
     const status = searchParams.get("status") || "all";
     const search = searchParams.get("search") || "";
     const dateRange = searchParams.get("dateRange") || "7days";
@@ -19,12 +20,11 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (keyword !== "all") {
-      // Assuming keywords is stored as a JSON array or comma-separated string
-      query = query.or(`keywords.cs.{${keyword}}, keywords.ilike.%${keyword}%`);
+      query = query.contains("keywords", [keyword]);
     }
 
-    if (mediaType !== "all") {
-      query = query.eq("mediaType", mediaType);
+    if (mediaName !== "all") {
+      query = query.eq("media_name", mediaName);
     }
 
     if (status !== "all") {
@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(`headline.ilike.%${search}%, summary.ilike.%${search}%`);
+      query = query.or(
+        `headline.ilike.%${search}%, summary.ilike.%${search}%, array_to_string(keywords, ',') .ilike.%${search}%`
+      );
     }
 
     // Apply date range filter
@@ -83,12 +85,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Define mainstream and social media names based on MediaName type
+    const mainstreamMediaNames: MediaName[] = [
+      "The Star",
+      "Malay Mail",
+      "New Straits Times",
+      "Bernama",
+      "Free Malaysia Today",
+      "The Edge Malaysia",
+      "The Borneo Post",
+      "Daily Express",
+      "Malaysiakini",
+      "The Straits Times",
+    ];
+    const socialMediaNames: MediaName[] = [
+      "X",
+      "Reddit",
+      "YouTube",
+      "Instagram",
+      "TikTok",
+      "Facebook",
+    ];
+
     // Get statistics
     const statsQuery = supabase
       .from("mentions")
-      .select("media_type, status", { count: "exact" });
+      .select("media_name, status", { count: "exact" });
     const { data: allMentions, count: totalMentions } = await statsQuery;
     console.log("allMentions", allMentions);
+
     // Calculate statistics
     const stats = {
       totalMentions: totalMentions || 0,
@@ -97,9 +122,11 @@ export async function GET(request: NextRequest) {
       unverifiedMentions:
         allMentions?.filter((m) => m.status === "unverified").length || 0,
       mainStreamMedia:
-        allMentions?.filter((m) => m.media_type === "mainstream").length || 0,
+        allMentions?.filter((m) => mainstreamMediaNames.includes(m.media_name))
+          .length || 0,
       socialMedia:
-        allMentions?.filter((m) => m.media_type === "social media").length || 0,
+        allMentions?.filter((m) => socialMediaNames.includes(m.media_name))
+          .length || 0,
     };
 
     // Get unique keywords for filter dropdown
@@ -126,7 +153,7 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil((totalCount || 0) / limit);
 
-    const data = {
+    const data: MentionApiResponse = {
       mentions: mentions || [],
       stats,
       keywords,
@@ -141,20 +168,14 @@ export async function GET(request: NextRequest) {
     // Return the expected data structure
     return NextResponse.json(
       {
-        mentions: mentions || [],
-        stats,
-        keywords,
-        total: totalCount || 0,
-        page,
-        totalPages,
-        limit,
+        ...data,
       },
       { status: 200 }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("API Error:", err);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error", message: err.message },
       { status: 500 }
     );
   }

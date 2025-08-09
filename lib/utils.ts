@@ -5,41 +5,46 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const mediaNameMap: Record<string, string> = {
-  "www.thestar.com.my": "The Star",
-  "thestar.com.my": "The Star",
-  "www.malaymail.com": "Malay Mail",
-  "malaymail.com": "Malay Mail",
-  "www.nst.com.my": "New Straits Times",
-  "nst.com.my": "New Straits Times",
-  "www.bernama.com": "Bernama",
-  "bernama.com": "Bernama",
-  "www.freemalaysiatoday.com": "Free Malaysia Today",
-  "freemalaysiatoday.com": "Free Malaysia Today",
-  "www.theedgemalaysia.com": "The Edge Malaysia",
-  "theedgemalaysia.com": "The Edge Malaysia",
-  "www.theborneopost.com": "The Borneo Post",
-  "theborneopost.com": "The Borneo Post",
-  "www.dailyexpress.com.my": "Daily Express",
-  "dailyexpress.com.my": "Daily Express",
-  "www.malaysiakini.com": "Malaysiakini",
-  "malaysiakini.com": "Malaysiakini",
-  "www.straitstimes.com": "The Straits Times",
-  "straitstimes.com": "The Straits Times",
-  "x.com": "X",
-  "twitter.com": "X",
-  "mobile.twitter.com": "X",
-  "www.twitter.com": "X",
-  "reddit.com": "Reddit",
-  "www.reddit.com": "Reddit",
-  "youtube.com": "YouTube",
-  "www.youtube.com": "YouTube",
+// mediaNameMap.ts
+export const mediaImageMap: Record<string, string> = {
+  Bernama:
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/bernama.png",
+  "The Borneo Post":
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/borneopost.png",
+  "Daily Express":
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/dailyexpress.png",
+  Facebook:
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/facebook.png",
+  "Facebook Messenger":
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/fbmessenger.png",
+  "Free Malaysia Today":
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/freemalaysiatoday.png",
+  Instagram:
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/instagram.png",
+  Malaysiakini:
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/malaysiakini.png",
+  "New Straits Times":
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/newsstraitstimes.png",
+  Reddit:
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/reddit.png",
+  "The Edge Malaysia":
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/theedge.png",
+  "The Star":
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/thestar.png",
+  "The Straits Times":
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/thestraitstimes.png",
+  TikTok:
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/tiktok.png",
+  X: "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/x.png",
+  YouTube:
+    "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/youtube.png",
 };
 
 export function getMediaImageURL(mediaName: string, size: number = 64): string {
-  const domain = mediaNameMap[mediaName];
-  // Uses Google's favicon service to retrieve the favicon as PNG.
-  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(
-    domain
-  )}&sz=${size}`;
+  console.log("Media Name:", mediaName);
+  const imageUrl = mediaImageMap[mediaName] || mediaImageMap.Unknown;
+  if (!imageUrl)
+    return "https://mmazibqqbdmyuicrfwud.supabase.co/storage/v1/object/public/assets/internet.png";
+  console.log("Image URL:", imageUrl);
+  return imageUrl;
 }

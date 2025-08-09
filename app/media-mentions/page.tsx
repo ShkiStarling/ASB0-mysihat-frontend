@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -11,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getMediaImageURL, mediaImageMap } from "@/lib/utils";
 import {
   Activity,
   AlertTriangle,
@@ -23,14 +23,13 @@ import {
   Eye,
   Filter,
   MessageSquare,
-  Search,
-  Share,
   TrendingUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   DateRange,
   FilterType,
+  MediaName,
   MediaType,
   MentionApiParams,
   MentionApiResponse,
@@ -49,8 +48,8 @@ const fetchMediaMentions = async (
     if (params.keyword && params.keyword !== "all") {
       queryParams.append("keyword", params.keyword);
     }
-    if (params.mediaType && params.mediaType !== "all") {
-      queryParams.append("mediaType", params.mediaType);
+    if (params.mediaName && params.mediaName !== "all") {
+      queryParams.append("mediaName", params.mediaName);
     }
     if (params.status && params.status !== "all") {
       queryParams.append("status", params.status);
@@ -81,19 +80,6 @@ const fetchMediaMentions = async (
 
     // Parse and return response
     const data: MentionApiResponse = await response.json();
-
-    // Ensure the response matches the expected shape
-    if (
-      !data.mentions ||
-      !data.stats ||
-      !data.keywords ||
-      !data.total ||
-      !data.page ||
-      !data.totalPages
-    ) {
-      throw new Error("Invalid API response format");
-    }
-
     return data;
   } catch (error) {
     console.error("Error fetching media mentions:", error);
@@ -119,7 +105,7 @@ export default function MediaIntelligenceMonitor() {
 
   // Filter states
   const [selectedKeyword, setSelectedKeyword] = useState("all");
-  const [selectedMediaType, setSelectedMediaType] = useState<MediaType>("all");
+  const [selectedMediaName, setselectedMediaName] = useState<MediaName>("all");
   const [selectedStatus, setSelectedStatus] = useState<MentionStatus>("all");
   const [selectedDateRange, setSelectedDateRange] =
     useState<DateRange>("7days");
@@ -138,7 +124,7 @@ export default function MediaIntelligenceMonitor() {
         page: currentPage,
         limit: itemsPerPage,
         keyword: selectedKeyword,
-        mediaType: selectedMediaType,
+        mediaName: selectedMediaName,
         status: selectedStatus,
         search: searchTerm,
         dateRange: selectedDateRange,
@@ -159,7 +145,7 @@ export default function MediaIntelligenceMonitor() {
   }, [
     currentPage,
     selectedKeyword,
-    selectedMediaType,
+    selectedMediaName,
     selectedStatus,
     selectedDateRange,
     searchTerm,
@@ -178,8 +164,8 @@ export default function MediaIntelligenceMonitor() {
         case "keyword":
           setSelectedKeyword(value.toString()); // Convert value to string
           break;
-        case "mediaType":
-          setSelectedMediaType(value as MediaType);
+        case "mediaName":
+          setselectedMediaName(value as MediaName); // Convert value to string
           break;
         case "status":
           setSelectedStatus(value as MentionStatus); // Convert value to string
@@ -209,11 +195,11 @@ export default function MediaIntelligenceMonitor() {
   const getStatusBadge = (status: MentionStatus) => {
     switch (status) {
       case "verified":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100";
       case "unverified":
-        return "bg-orange-100 text-orange-800";
+        return "bg-orange-100 text-orange-800 dark:bg-orange-800 dark:text-orange-100";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100";
     }
   };
 
@@ -247,8 +233,8 @@ export default function MediaIntelligenceMonitor() {
     }
 
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t border-gray-200">
-        <div className="text-sm text-gray-600 order-2 sm:order-1">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 dark:border-gray-700 border-gray-200">
+        <div className="text-sm dark:text-gray-300 text-gray-600 order-2 sm:order-1">
           Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
           {Math.min(currentPage * itemsPerPage, data.total)} of {data.total}{" "}
           entries
@@ -257,9 +243,9 @@ export default function MediaIntelligenceMonitor() {
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-lg dark:border-gray-600 border-gray-300 dark:disabled:bg-slate-800 disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-slate-700 hover:bg-gray-50 transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 dark:text-gray-300 text-gray-600" />
           </button>
 
           <div className="hidden sm:flex items-center gap-1">
@@ -267,12 +253,14 @@ export default function MediaIntelligenceMonitor() {
               <>
                 <button
                   onClick={() => handlePageChange(1)}
-                  className="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
+                  className="px-3 py-2 rounded-lg dark:border-gray-600 border-gray-300 dark:hover:bg-slate-700 hover:bg-gray-50 transition-colors text-sm dark:text-gray-200 text-gray-700"
                 >
                   1
                 </button>
                 {startPage > 2 && (
-                  <span className="px-2 text-gray-500">...</span>
+                  <span className="px-2 dark:text-gray-400 text-gray-500">
+                    ...
+                  </span>
                 )}
               </>
             )}
@@ -283,8 +271,8 @@ export default function MediaIntelligenceMonitor() {
                 onClick={() => handlePageChange(page)}
                 className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
                   currentPage === page
-                    ? "bg-blue-500 text-white border-blue-500"
-                    : "border-gray-300 hover:bg-gray-50"
+                    ? "dark:bg-blue-600 bg-blue-800 dark:text-white text-white dark:border-blue-500 border-blue-500"
+                    : "dark:border-gray-600 border-gray-300 dark:hover:bg-slate-700 hover:bg-gray-50 dark:text-gray-200 text-gray-700"
                 }`}
               >
                 {page}
@@ -294,11 +282,13 @@ export default function MediaIntelligenceMonitor() {
             {endPage < totalPages && (
               <>
                 {endPage < totalPages - 1 && (
-                  <span className="px-2 text-gray-500">...</span>
+                  <span className="px-2 dark:text-gray-400 text-gray-500">
+                    ...
+                  </span>
                 )}
                 <button
                   onClick={() => handlePageChange(totalPages)}
-                  className="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
+                  className="px-3 py-2 rounded-lg dark:border-gray-600 border-gray-300 dark:hover:bg-slate-700 hover:bg-gray-50 transition-colors text-sm dark:text-gray-200 text-gray-700"
                 >
                   {totalPages}
                 </button>
@@ -307,7 +297,7 @@ export default function MediaIntelligenceMonitor() {
           </div>
 
           <div className="sm:hidden">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm dark:text-gray-400 text-gray-600">
               Page {currentPage} of {totalPages}
             </span>
           </div>
@@ -315,9 +305,9 @@ export default function MediaIntelligenceMonitor() {
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-lg dark:border-gray-600 border-gray-300 dark:disabled:bg-slate-800 disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-slate-700 hover:bg-gray-50 transition-colors"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 dark:text-gray-300 text-gray-600" />
           </button>
         </div>
       </div>
@@ -439,22 +429,7 @@ export default function MediaIntelligenceMonitor() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium text-nexus-text mb-2 block">
-                Search
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-nexus-text-muted w-4 h-4" />
-                <Input
-                  placeholder="Search headlines, summaries..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="nexus-input pl-10"
-                />
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium text-nexus-text mb-2 block">
                 Keyword
@@ -468,7 +443,7 @@ export default function MediaIntelligenceMonitor() {
                 </SelectTrigger>
                 <SelectContent className="bg-nexus-card border-nexus-border">
                   <SelectItem value="all">All Keywords</SelectItem>
-                  {keywords.map((keyword) => (
+                  {data?.keywords.map((keyword) => (
                     <SelectItem key={keyword} value={keyword}>
                       {keyword}
                     </SelectItem>
@@ -479,25 +454,27 @@ export default function MediaIntelligenceMonitor() {
 
             <div>
               <label className="text-sm font-medium text-nexus-text mb-2 block">
-                Media Type
+                Media Name
               </label>
               <Select
-                value={selectedMediaType}
+                value={selectedMediaName}
                 onValueChange={(value) =>
-                  setSelectedMediaType(value as MediaType)
+                  handleFilterChange("mediaName", value as MediaName)
                 }
               >
                 <SelectTrigger className="nexus-input">
-                  <SelectValue placeholder="All Types" />
+                  <SelectValue placeholder="All Outlets" />
                 </SelectTrigger>
                 <SelectContent className="bg-nexus-card border-nexus-border">
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="mainstream">Mainstream Media</SelectItem>
-                  <SelectItem value="social media">Social Media</SelectItem>
+                  <SelectItem value="all">All Outlets</SelectItem>
+                  {Object.keys(mediaImageMap).map((mediaName) => (
+                    <SelectItem key={mediaName} value={mediaName as MediaName}>
+                      {mediaName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-sm font-medium text-nexus-text mb-2 block">
                 Status
@@ -536,7 +513,6 @@ export default function MediaIntelligenceMonitor() {
                   <SelectItem value="today">Today</SelectItem>
                   <SelectItem value="7days">Last 7 Days</SelectItem>
                   <SelectItem value="30days">Last 30 Days</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -557,18 +533,17 @@ export default function MediaIntelligenceMonitor() {
             {data?.mentions.map((mention) => (
               <Card
                 key={mention.id}
-                className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/80 backdrop-blur-sm"
+                className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg dark:bg-slate-800 bg-white backdrop-blur-sm"
               >
                 <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row">
                     {/* Image Section */}
                     <div className="md:w-64 h-48 md:h-auto relative overflow-hidden">
                       <img
-                        src={mention.imageUrl}
+                        src={getMediaImageURL(mention.media_name)}
                         alt="Media mention"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                     </div>
 
                     {/* Content Section */}
@@ -580,7 +555,7 @@ export default function MediaIntelligenceMonitor() {
                             variant="outline"
                             className={`${getStatusBadge(
                               mention.status
-                            )} font-medium`}
+                            )} font-medium border-gray-600`}
                           >
                             {getStatusIcon(mention.status)}
                             <span className="ml-1 capitalize">
@@ -590,35 +565,35 @@ export default function MediaIntelligenceMonitor() {
                           <Badge
                             variant="outline"
                             className={`${getMediaTypeBadge(
-                              mention.mediaType
-                            )} font-medium`}
+                              mention.media_type
+                            )} font-medium border-gray-600`}
                           >
-                            {mention.mediaType}
+                            {mention.media_type}
                           </Badge>
                           <Badge
                             variant="secondary"
-                            className="bg-slate-100 text-slate-700 font-medium"
+                            className="bg-slate-700 text-gray-200 font-medium hover:bg-slate-600"
                           >
-                            {mention.mediaName}
+                            {mention.media_name}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
-                          <Calendar className="w-3 h-3" />
+                        <div className="flex items-center gap-2 text-sm dark:text-gray-400 text-gray-500 dark:bg-slate-700 bg-gray-50 px-3 py-1 rounded-full">
+                          <Calendar className="w-3 h-3 dark:text-gray-400 text-gray-500" />
                           {mention.date}
                         </div>
                       </div>
 
                       {/* Title and Summary */}
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                      <h3 className="text-xl font-bold dark:text-gray-100 text-gray-900 mb-3 line-clamp-2 dark:group-hover:text-blue-400 group-hover:text-blue-800 transition-colors">
                         {mention.headline}
                       </h3>
-                      <p className="text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+                      <p className="dark:text-gray-300 text-gray-600 mb-4 line-clamp-2 leading-relaxed">
                         {mention.summary}
                       </p>
 
                       {/* Keywords */}
                       <div className="mb-4">
-                        <span className="text-sm font-medium text-gray-700 mb-2 block">
+                        <span className="text-sm font-medium dark:text-gray-400 text-gray-700 mb-2 block">
                           Keywords:
                         </span>
                         <div className="flex flex-wrap gap-2">
@@ -626,7 +601,7 @@ export default function MediaIntelligenceMonitor() {
                             <Badge
                               key={index}
                               variant="secondary"
-                              className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-default"
+                              className="text-xs bg-blue-700 text-blue-200 hover:bg-blue-800 transition-colors cursor-default"
                             >
                               #{keyword}
                             </Badge>
@@ -635,28 +610,9 @@ export default function MediaIntelligenceMonitor() {
                       </div>
 
                       {/* Footer */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          {mention.mediaType === "social media" ? (
-                            <>
-                              <Share className="w-4 h-4" />
-                              <span className="font-medium">
-                                {mention.engagement}
-                              </span>
-                              <span>interactions</span>
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="w-4 h-4" />
-                              <span className="font-medium">
-                                {mention.engagement}
-                              </span>
-                              <span>views</span>
-                            </>
-                          )}
-                        </div>
+                      <div className="flex items-center justify-end pt-4 dark:border-gray-700 border-gray-100">
                         <Button
-                          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                          className="dark:bg-blue-600 bg-blue-800 rounded-full text-white shadow-lg dark:hover:bg-blue-500 hover:bg-blue-700 transition-all duration-200 transform hover:-translate-y-0.5"
                           size="sm"
                         >
                           <ExternalLink className="w-4 h-4 mr-2" />
