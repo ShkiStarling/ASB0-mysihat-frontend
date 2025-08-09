@@ -1,12 +1,6 @@
 "use client";
 
 import MySihatDashboard from "@/components/dahsboard";
-import dynamic from "next/dynamic";
-
-const EnhancedMalaysiaMap = dynamic(
-  () => import("@/components/enhanced-malaysia-map"),
-  { ssr: false }
-);
 
 // Malaysian health data focused on early detection and outbreak identification
 const mockHealthData = {
