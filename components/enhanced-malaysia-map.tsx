@@ -1,62 +1,65 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
+import { memo, useEffect, useRef } from "react";
 
 interface DistrictData {
-  name: string
-  state: string
-  alertLevel: "low" | "medium" | "high"
-  keywordCount: number
-  verifiedCases: number
-  unverifiedPosts: number
-  topSymptoms: string[]
-  coordinates: [number, number]
-  keywords: string[]
+  name: string;
+  state: string;
+  alertLevel: "low" | "medium" | "high";
+  keywordCount: number;
+  verifiedCases: number;
+  unverifiedPosts: number;
+  topSymptoms: string[];
+  coordinates: [number, number];
+  keywords: string[];
 }
 
 interface EnhancedMalaysiaMapProps {
-  districts: DistrictData[]
-  selectedDistrict: string | null
-  onDistrictSelect: (district: string | null) => void
-  filteredDistricts?: DistrictData[]
+  districts: DistrictData[];
+  selectedDistrict: string | null;
+  filteredDistricts?: DistrictData[];
+  onThreatClick?: (districtName: string) => void;
 }
 
-export default function EnhancedMalaysiaMap({
+function EnhancedMalaysiaMap({
   districts,
   selectedDistrict,
-  onDistrictSelect,
+  onThreatClick,
   filteredDistricts = districts,
 }: EnhancedMalaysiaMapProps) {
-  const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<any>(null)
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!mapRef.current || typeof window === "undefined") return
+    if (!mapRef.current || typeof window === "undefined") return;
 
     import("leaflet").then((L) => {
-      delete (L.Icon.Default.prototype as any)._getIconUrl
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-      })
+        iconRetinaUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+        iconUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+        shadowUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+      });
 
       const map = L.map(mapRef.current!, {
         zoomControl: false,
         attributionControl: true,
-      }).setView([4.2105, 101.9758], 6)
+      }).setView([4.2105, 101.9758], 6);
 
-      mapInstanceRef.current = map
+      mapInstanceRef.current = map;
 
       // Add custom zoom control with styling to match the image
       const zoomControl = L.control
         .zoom({
           position: "topleft",
         })
-        .addTo(map)
+        .addTo(map);
 
       // Style the zoom control to match the image
-      const style = document.createElement("style")
+      const style = document.createElement("style");
       style.textContent = `
         .leaflet-control-zoom {
           border: none !important;
@@ -82,27 +85,32 @@ export default function EnhancedMalaysiaMap({
           border-radius: 0 0 4px 4px !important;
           border-top: none !important;
         }
-      `
-      document.head.appendChild(style)
+      `;
+      document.head.appendChild(style);
 
       // Use OpenStreetMap tiles to match the image style
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution:
+          '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
-      }).addTo(map)
+      }).addTo(map);
 
       // Clear existing markers
       map.eachLayer((layer) => {
         if (layer instanceof L.CircleMarker) {
-          map.removeLayer(layer)
+          map.removeLayer(layer);
         }
-      })
+      });
 
       filteredDistricts.forEach((district) => {
         const alertColor =
-          district.alertLevel === "high" ? "#dc2626" : district.alertLevel === "medium" ? "#ea580c" : "#16a34a"
+          district.alertLevel === "high"
+            ? "#dc2626"
+            : district.alertLevel === "medium"
+            ? "#ea580c"
+            : "#16a34a";
 
-        const size = Math.max(12, Math.min(24, district.keywordCount / 8))
+        const size = Math.max(12, Math.min(24, district.keywordCount / 8));
 
         // Create circle markers similar to the image
         const marker = L.circleMarker(district.coordinates, {
@@ -112,7 +120,7 @@ export default function EnhancedMalaysiaMap({
           weight: 2,
           opacity: 1,
           fillOpacity: 0.8,
-        }).addTo(map)
+        }).addTo(map);
 
         // Add hover tooltip
         marker.bindTooltip(
@@ -135,8 +143,8 @@ export default function EnhancedMalaysiaMap({
             direction: "top",
             offset: [0, -10],
             className: "custom-tooltip",
-          },
-        )
+          }
+        );
 
         // Enhanced popup with clean styling
         marker.bindPopup(
@@ -222,7 +230,7 @@ export default function EnhancedMalaysiaMap({
                         border-radius: 3px; 
                         font-size: 10px;
                         color: #374151;
-                      ">${symptom}</span>`,
+                      ">${symptom}</span>`
                   )
                   .join("")}
               </div>
@@ -232,24 +240,28 @@ export default function EnhancedMalaysiaMap({
           {
             maxWidth: 250,
             className: "custom-popup-clean",
-          },
-        )
+          }
+        );
 
         marker.on("click", () => {
-          onDistrictSelect(district.name === selectedDistrict ? null : district.name)
-        })
+          if (onThreatClick) {
+            (window as any).handleThreatClick = (districtName: string) => {
+              onThreatClick(districtName);
+            };
+          }
+        });
 
         // Highlight selected district
         if (selectedDistrict === district.name) {
           marker.setStyle({
             weight: 4,
             color: "#1f2937",
-          })
+          });
         }
-      })
+      });
 
       // Add custom CSS for clean popup and tooltip styling
-      const popupStyle = document.createElement("style")
+      const popupStyle = document.createElement("style");
       popupStyle.textContent = `
         .custom-popup-clean .leaflet-popup-content-wrapper {
           background: white;
@@ -297,17 +309,17 @@ export default function EnhancedMalaysiaMap({
         .leaflet-tooltip-top:before {
           border-top-color: rgba(0, 0, 0, 0.8) !important;
         }
-      `
-      document.head.appendChild(popupStyle)
-    })
+      `;
+      document.head.appendChild(popupStyle);
+    });
 
     return () => {
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove()
-        mapInstanceRef.current = null
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
       }
-    }
-  }, [filteredDistricts, selectedDistrict, onDistrictSelect])
+    };
+  }, [filteredDistricts, selectedDistrict, onThreatClick]);
 
   return (
     <>
@@ -344,9 +356,15 @@ export default function EnhancedMalaysiaMap({
 
         {/* Last updated - positioned like in the image */}
         <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-1">
-          <span className="text-xs text-gray-600">Last updated: 2 hours ago</span>
+          <span className="text-xs text-gray-600">
+            Last updated: 2 hours ago
+          </span>
         </div>
       </div>
     </>
-  )
+  );
 }
+
+export default memo(EnhancedMalaysiaMap, (prev, next) => {
+  return JSON.stringify(prev.districts) === JSON.stringify(next.districts);
+});
