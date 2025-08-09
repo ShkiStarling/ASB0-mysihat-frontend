@@ -18,96 +18,102 @@ import {
   Settings,
   TrendingUp,
   Zap,
+  Loader2,
+  Shuffle,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 // Mock alert data focused on early detection
-const mockAlertData = {
-  activeAlerts: [
-    {
-      id: 1,
-      type: "outbreak_risk",
-      severity: "high",
-      title: "Dengue Fever Outbreak Risk - Selangor",
-      location: "Petaling District",
-      description:
-        "AI detected 245% spike in dengue-related mentions with geographic clustering pattern",
-      threshold: "30%",
-      current: "245%",
-      timestamp: "15 minutes ago",
-      status: "active",
-      confidence: 87,
-      aiGenerated: true,
-    },
-    {
-      id: 2,
-      type: "pattern_anomaly",
-      severity: "medium",
-      title: "Respiratory Symptoms Pattern Detected",
-      location: "Johor Bahru",
-      description:
-        "Unusual clustering of respiratory symptoms across 3 districts in 48-hour window",
-      threshold: "10 cases/hour",
-      current: "15 cases/hour",
-      timestamp: "1 hour ago",
-      status: "investigating",
-      confidence: 92,
-      aiGenerated: true,
-    },
-    {
-      id: 3,
-      type: "early_warning",
-      severity: "medium",
-      title: "Food Poisoning Cluster Alert",
-      location: "George Town",
-      description:
-        "Geographic clustering of gastrointestinal symptoms near commercial district",
-      threshold: "20%",
-      current: "34%",
-      timestamp: "3 hours ago",
-      status: "monitoring",
-      confidence: 78,
-      aiGenerated: true,
-    },
-    {
-      id: 4,
-      type: "keyword_spike",
-      severity: "low",
-      title: "Skin Condition Mentions Trending",
-      location: "Kota Kinabalu",
-      description:
-        "Gradual increase in skin-related health mentions over 72 hours",
-      threshold: "15%",
-      current: "18%",
-      timestamp: "6 hours ago",
-      status: "monitoring",
-      confidence: 65,
-      aiGenerated: false,
-    },
-  ],
-  thresholds: [
-    { metric: "Mention Spike", current: 30, unit: "%" },
-    { metric: "Geographic Clustering", current: 5, unit: "km radius" },
-    { metric: "Time Window", current: 6, unit: "hours" },
-    { metric: "AI Confidence", current: 75, unit: "%" },
-  ],
-  alertHistory: [
-    { date: "Jan 1", alerts: 2, aiAlerts: 1 },
-    { date: "Jan 2", alerts: 1, aiAlerts: 1 },
-    { date: "Jan 3", alerts: 4, aiAlerts: 3 },
-    { date: "Jan 4", alerts: 3, aiAlerts: 2 },
-    { date: "Jan 5", alerts: 1, aiAlerts: 0 },
-    { date: "Jan 6", alerts: 5, aiAlerts: 4 },
-    { date: "Jan 7", alerts: 3, aiAlerts: 2 },
-  ],
-};
+const mockAlertData = [
+  {
+    id: 1,
+    type: "outbreak_risk",
+    severity: "high",
+    title: "Dengue Fever Outbreak Risk - Selangor",
+    location: "Petaling District",
+    description:
+      "AI detected 245% spike in dengue-related mentions with geographic clustering pattern",
+    threshold: "30%",
+    current: "245%",
+    timestamp: "15 minutes ago",
+    status: "active",
+    confidence: 87,
+    aiGenerated: true,
+  },
+  {
+    id: 2,
+    type: "pattern_anomaly",
+    severity: "medium",
+    title: "Respiratory Symptoms Pattern Detected",
+    location: "Johor Bahru",
+    description:
+      "Unusual clustering of respiratory symptoms across 3 districts in 48-hour window",
+    threshold: "10 cases/hour",
+    current: "15 cases/hour",
+    timestamp: "1 hour ago",
+    status: "investigating",
+    confidence: 92,
+    aiGenerated: true,
+  },
+  {
+    id: 3,
+    type: "early_warning",
+    severity: "medium",
+    title: "Food Poisoning Cluster Alert",
+    location: "George Town",
+    description:
+      "Geographic clustering of gastrointestinal symptoms near commercial district",
+    threshold: "20%",
+    current: "34%",
+    timestamp: "3 hours ago",
+    status: "monitoring",
+    confidence: 78,
+    aiGenerated: true,
+  },
+  {
+    id: 4,
+    type: "keyword_spike",
+    severity: "low",
+    title: "Skin Condition Mentions Trending",
+    location: "Kota Kinabalu",
+    description:
+      "Gradual increase in skin-related health mentions over 72 hours",
+    threshold: "15%",
+    current: "18%",
+    timestamp: "6 hours ago",
+    status: "monitoring",
+    confidence: 65,
+    aiGenerated: false,
+  },
+];
+
+const initialThresholds = [
+  { id: 1, metric: "Mention Spike", current: 30, unit: "%" },
+  { id: 2, metric: "Geographic Clustering", current: 5, unit: "km radius" },
+  { id: 3, metric: "Time Window", current: 6, unit: "hours" },
+  { id: 4, metric: "AI Confidence", current: 75, unit: "%" },
+];
+
+const alertHistory = [
+  { date: "Jan 1", alerts: 2, aiAlerts: 1 },
+  { date: "Jan 2", alerts: 1, aiAlerts: 1 },
+  { date: "Jan 3", alerts: 4, aiAlerts: 3 },
+  { date: "Jan 4", alerts: 3, aiAlerts: 2 },
+  { date: "Jan 5", alerts: 1, aiAlerts: 0 },
+  { date: "Jan 6", alerts: 5, aiAlerts: 4 },
+  { date: "Jan 7", alerts: 3, aiAlerts: 2 },
+];
 
 export default function EarlyWarningsPage() {
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [aiAlertsEnabled, setAiAlertsEnabled] = useState(true);
   const [selectedAlert, setSelectedAlert] = useState<number | null>(null);
+  const [thresholds, setThresholds] = useState(initialThresholds);
+  const [alerts, setAlerts] = useState(mockAlertData);
+  const [isUpdatingThresholds, setIsUpdatingThresholds] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const currentTime = new Date();
   const timeString = currentTime.toLocaleTimeString("en-US", {
@@ -125,6 +131,80 @@ export default function EarlyWarningsPage() {
         console.log(data);
       });
   }, []);
+
+  const handleThresholdChange = (id: number, newValue: string) => {
+    const numericValue = parseFloat(newValue);
+    if (!isNaN(numericValue) && numericValue >= 0) {
+      setThresholds((prevThresholds) =>
+        prevThresholds.map((threshold) =>
+          threshold.id === id
+            ? { ...threshold, current: numericValue }
+            : threshold
+        )
+      );
+    }
+  };
+
+  const handleUpdateThresholds = async () => {
+    try {
+      setIsUpdatingThresholds(true);
+      setIsSearching(true);
+      console.log("Updating thresholds:", thresholds);
+      
+      // Validate thresholds before sending
+      const validThresholds = thresholds.every(threshold => 
+        threshold.current > 0 && !isNaN(threshold.current)
+      );
+      
+      if (!validThresholds) {
+        // Use a more user-friendly notification instead of alert
+        console.error("Invalid threshold values");
+        return;
+      }
+      
+      // Simulate AI searching and processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Here you would typically send the updated thresholds to your API
+      // Example API call:
+      // const response = await fetch('/api/update-thresholds', {
+      //   method: 'PUT',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({ thresholds }),
+      // });
+      // 
+      // if (!response.ok) {
+      //   throw new Error('Failed to update thresholds');
+      // }
+      
+      // Simulate finding new alerts based on updated thresholds
+      setIsSearching(false);
+      console.log("Thresholds updated successfully!");
+      
+      // Optional: You could trigger a re-evaluation of existing alerts based on new thresholds
+      // This would typically be handled on the backend, but for demonstration:
+      // refetchAlertsWithNewThresholds();
+      
+    } catch (error) {
+      console.error("Error updating thresholds:", error);
+      setIsSearching(false);
+    } finally {
+      setIsUpdatingThresholds(false);
+    }
+  };
+
+  const handleReshuffleAlerts = () => {
+    setIsSearching(true);
+    
+    // Simulate AI re-analyzing and reshuffling alerts
+    setTimeout(() => {
+      const shuffledAlerts = [...alerts].sort(() => Math.random() - 0.5);
+      setAlerts(shuffledAlerts);
+      setIsSearching(false);
+    }, 1500);
+  };
 
   return (
     <div>
@@ -146,11 +226,10 @@ export default function EarlyWarningsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-nexus-text">
-              {mockAlertData.activeAlerts.length}
+              {alerts.length}
             </div>
             <p className="text-xs text-nexus-text-muted">
-              {mockAlertData.activeAlerts.filter((a) => a.aiGenerated).length}{" "}
-              AI-generated
+              {alerts.filter((a) => a.aiGenerated).length} AI-generated
             </p>
           </CardContent>
         </Card>
@@ -164,10 +243,7 @@ export default function EarlyWarningsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-nexus-text">
-              {
-                mockAlertData.activeAlerts.filter((a) => a.severity === "high")
-                  .length
-              }
+              {alerts.filter((a) => a.severity === "high").length}
             </div>
             <p className="text-xs text-green-500">-1 from yesterday</p>
           </CardContent>
@@ -206,14 +282,45 @@ export default function EarlyWarningsPage() {
         <div className="lg:col-span-2">
           <Card className="nexus-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-nexus-text">
-                <AlertTriangle className="w-5 h-5 text-nexus-cyan" />
-                Active Early Warning Alerts
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-nexus-text">
+                  <AlertTriangle className="w-5 h-5 text-nexus-cyan" />
+                  Active Early Warning Alerts
+                </CardTitle>
+                {/* <Button
+                  onClick={handleReshuffleAlerts}
+                  disabled={isSearching}
+                  className="nexus-action-btn h-8 px-3"
+                >
+                  <Shuffle className="w-4 h-4 mr-2" />
+                  Reshuffle
+                </Button> */}
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockAlertData.activeAlerts.map((alert) => (
+              {isSearching ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div className="relative">
+                    <Loader2 className="w-12 h-12 text-nexus-cyan animate-spin" />
+                    <Brain className="w-6 h-6 text-purple-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                  </div>
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold text-nexus-text">
+                      AI Intelligence Processing
+                    </h3>
+                    <p className="text-sm text-nexus-text-muted max-w-md">
+                      Neural networks are analyzing health patterns, social media mentions, and geographical data to identify emerging threats...
+                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-4">
+                      <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-pulse delay-75"></div>
+                      <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-pulse delay-150"></div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {alerts.map((alert) => (
                   <div
                     key={alert.id}
                     className={`nexus-card p-4 cursor-pointer transition-colors ${
@@ -318,6 +425,7 @@ export default function EarlyWarningsPage() {
                   </div>
                 ))}
               </div>
+              )}
             </CardContent>
           </Card>
 
@@ -338,7 +446,7 @@ export default function EarlyWarningsPage() {
                   className="h-full"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={mockAlertData.alertHistory}>
+                    <LineChart data={alertHistory}>
                       <XAxis
                         dataKey="date"
                         tick={{ fontSize: 12, fill: "#64748b" }}
@@ -383,8 +491,8 @@ export default function EarlyWarningsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockAlertData.thresholds.map((threshold, index) => (
-                  <div key={index} className="space-y-2">
+                {thresholds.map((threshold) => (
+                  <div key={threshold.id} className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-nexus-text">
                         {threshold.metric}
@@ -396,13 +504,29 @@ export default function EarlyWarningsPage() {
                     <Input
                       type="number"
                       value={threshold.current}
+                      onChange={(e) =>
+                        handleThresholdChange(threshold.id, e.target.value)
+                      }
                       className="nexus-input h-8"
-                      readOnly
+                      min="0"
+                      step={threshold.unit === "%" ? "1" : "0.1"}
+                      placeholder={`Enter ${threshold.metric.toLowerCase()}`}
                     />
                   </div>
                 ))}
-                <Button className="w-full nexus-action-btn bg-nexus-cyan text-nexus-dark hover:bg-nexus-cyan/80">
-                  Update Thresholds
+                <Button
+                  onClick={handleUpdateThresholds}
+                  disabled={isUpdatingThresholds || isSearching}
+                  className="w-full nexus-action-btn bg-nexus-cyan text-nexus-dark hover:bg-nexus-cyan/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUpdatingThresholds ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {isSearching ? "AI Searching..." : "Updating..."}
+                    </div>
+                  ) : (
+                    "Update Thresholds"
+                  )}
                 </Button>
               </div>
             </CardContent>
