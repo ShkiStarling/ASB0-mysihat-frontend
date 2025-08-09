@@ -1,0 +1,405 @@
+@import "tailwindcss";
+
+/* CSS Custom Properties for Theme System */
+:root {
+  /* Dark Theme (Default) */
+  --nexus-dark: #0f172a;
+  --nexus-darker: #020617;
+  --nexus-card: #1e293b;
+  --nexus-border: #334155;
+  --nexus-cyan: #00d4ff;
+  --nexus-text: #f1f5f9;
+  --nexus-text-muted: #64748b;
+  --nexus-hover: #475569;
+
+  /* Light Theme Variables */
+  --nexus-light-bg: #ffffff;
+  --nexus-light-bg-secondary: #f8fafc;
+  --nexus-light-card: #ffffff;
+  --nexus-light-border: #e2e8f0;
+  --nexus-light-cyan: #0ea5e9;
+  --nexus-light-text: #0f172a;
+  --nexus-light-text-muted: #64748b;
+  --nexus-light-hover: #f1f5f9;
+}
+
+/* Dark Theme Classes */
+.dark {
+  --bg-primary: var(--nexus-dark);
+  --bg-secondary: var(--nexus-darker);
+  --bg-card: var(--nexus-card);
+  --border-color: var(--nexus-border);
+  --accent-color: var(--nexus-cyan);
+  --text-primary: var(--nexus-text);
+  --text-muted: var(--nexus-text-muted);
+  --hover-color: var(--nexus-hover);
+}
+
+/* Light Theme Classes */
+.light {
+  --bg-primary: var(--nexus-light-bg);
+  --bg-secondary: var(--nexus-light-bg-secondary);
+  --bg-card: var(--nexus-light-card);
+  --border-color: var(--nexus-light-border);
+  --accent-color: var(--nexus-light-cyan);
+  --text-primary: var(--nexus-light-text);
+  --text-muted: var(--nexus-light-text-muted);
+  --hover-color: var(--nexus-light-hover);
+}
+
+@theme inline {
+  --color-nexus-dark: #0f172a;
+  --color-nexus-darker: #020617;
+  --color-nexus-card: #1e293b;
+  --color-nexus-border: #334155;
+  --color-nexus-cyan: #00d4ff;
+  --color-nexus-text: #f1f5f9;
+  --color-nexus-text-muted: #64748b;
+  --color-nexus-hover: #475569;
+
+  /* Light theme colors */
+  --color-nexus-light-bg: #ffffff;
+  --color-nexus-light-bg-secondary: #f8fafc;
+  --color-nexus-light-card: #ffffff;
+  --color-nexus-light-border: #e2e8f0;
+  --color-nexus-light-cyan: #0ea5e9;
+  --color-nexus-light-text: #0f172a;
+  --color-nexus-light-text-muted: #64748b;
+  --color-nexus-light-hover: #f1f5f9;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* NEXUS OS Design System - Updated for Theme Support */
+
+/* Background Classes */
+.bg-nexus-dark {
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
+}
+
+.bg-nexus-darker {
+  background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease;
+}
+
+.bg-nexus-card {
+  background-color: var(--bg-card);
+  transition: background-color 0.3s ease;
+}
+
+.bg-nexus-cyan {
+  background-color: var(--accent-color);
+  transition: background-color 0.3s ease;
+}
+
+/* Text Classes */
+.text-nexus-text {
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.text-nexus-text-muted {
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+.text-nexus-cyan {
+  color: var(--accent-color);
+  transition: color 0.3s ease;
+}
+
+/* Border Classes */
+.border-nexus-border {
+  border-color: var(--border-color);
+  transition: border-color 0.3s ease;
+}
+
+/* Header */
+.nexus-header {
+  background: var(--bg-primary);
+  backdrop-filter: blur(10px);
+  transition: background-color 0.3s ease;
+}
+
+.light .nexus-header {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar */
+.nexus-sidebar {
+  background: var(--bg-secondary);
+  min-height: calc(100vh - 73px);
+  transition: background-color 0.3s ease;
+}
+
+/* Navigation Items */
+.nexus-nav-item {
+  @apply flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium;
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+}
+
+.nexus-nav-item:hover {
+  background-color: var(--hover-color);
+  color: var(--text-primary);
+}
+
+.nexus-nav-active {
+  background-color: var(--bg-card);
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+}
+
+/* Cards */
+.nexus-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.light .nexus-card {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dark .nexus-card {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Input */
+.nexus-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.nexus-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.light .nexus-input:focus {
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+}
+
+.dark .nexus-input:focus {
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.1);
+}
+
+.nexus-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Badges */
+.nexus-badge-live {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  transition: all 0.3s ease;
+}
+
+.nexus-badge-active {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  transition: all 0.3s ease;
+}
+
+/* Tabs */
+.nexus-tab {
+  @apply px-4 py-2 text-sm font-medium rounded-lg;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.nexus-tab:hover {
+  color: var(--text-primary);
+  background: var(--hover-color);
+}
+
+.nexus-tab-active {
+  color: var(--accent-color);
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+/* Action Buttons */
+.nexus-action-btn {
+  @apply flex flex-col items-center justify-center p-3 rounded-lg;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  min-height: 60px;
+  transition: all 0.3s ease;
+}
+
+.nexus-action-btn:hover {
+  background: var(--hover-color);
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+
+/* Theme Toggle Specific Styles */
+.theme-toggle-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--hover-color);
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+
+.theme-toggle-icon {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sun-icon {
+  color: #f59e0b;
+}
+
+.moon-icon {
+  color: #6366f1;
+}
+
+/* Tooltip */
+.nexus-tooltip {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+}
+
+.light .nexus-tooltip {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.dark .nexus-tooltip {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Progress Bars */
+.nexus-progress {
+  background: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: background-color 0.3s ease;
+}
+
+.nexus-progress-fill {
+  background: var(--accent-color);
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+/* Scrollbar - Theme Aware */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hover-color);
+}
+
+/* Light Mode Specific Adjustments */
+.light {
+  /* Ensure proper contrast for light mode */
+}
+
+.light .nexus-badge-live,
+.light .nexus-badge-active {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* Chart and Data Visualization Adjustments */
+.light .recharts-cartesian-axis-tick-value {
+  fill: var(--text-muted) !important;
+}
+
+.light .recharts-cartesian-axis-line,
+.light .recharts-cartesian-axis-tick-line {
+  stroke: var(--border-color) !important;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Theme transition for all elements */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .nexus-sidebar {
+    display: none;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Focus styles for better accessibility */
+.theme-toggle-btn:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
