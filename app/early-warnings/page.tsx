@@ -282,8 +282,8 @@ export default function EarlyWarningsPage() {
       setAlerts(updatedAlerts);
 
       // Randomize thresholds to simulate dynamic adjustments
-      const newRandomThresholds = randomizeThresholds(thresholds);
-      setThresholds(newRandomThresholds);
+      // const newRandomThresholds = randomizeThresholds(thresholds);
+      // setThresholds(newRandomThresholds);
 
       // Generate new alert history data
       const newAlertHistory = generateNewAlertHistory();
