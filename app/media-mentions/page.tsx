@@ -538,11 +538,11 @@ export default function MediaIntelligenceMonitor() {
                 <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row">
                     {/* Image Section */}
-                    <div className="md:w-64 h-48 md:h-auto relative overflow-hidden">
+                    <div className="md:w-48 h-36 md:h-auto flex items-center justify-center overflow-hidden dark:bg-[#1e293b]">
                       <img
                         src={getMediaImageURL(mention.media_name)}
                         alt="Media mention"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-24 h-24 object-contain group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
 
